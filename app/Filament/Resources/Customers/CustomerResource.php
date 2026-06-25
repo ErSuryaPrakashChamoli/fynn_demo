@@ -21,6 +21,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 
 
 use Filament\Forms\Components\Select;
@@ -30,6 +31,11 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables;
 
 use Filament\Forms\Components\FileUpload;
+
+
+use Filament\Schemas\Components\Text;
+use Illuminate\Support\HtmlString;
+
 
 
 class CustomerResource extends Resource
@@ -43,7 +49,13 @@ class CustomerResource extends Resource
     public static function form(Schema $schema): Schema
     {
 
-             return $schema->schema([
+        return $schema->schema([
+            Section::make('Customer Loan Journey')
+                ->schema([
+                    View::make('filament.components.customer-journey-progress'),
+                ])
+                ->columnSpanFull(),
+
             Section::make('Customer Basic Details')
                 ->schema([
                     TextInput::make('customer_name')
