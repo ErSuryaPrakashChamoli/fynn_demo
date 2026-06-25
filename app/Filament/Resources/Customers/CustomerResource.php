@@ -29,6 +29,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables;
 
+use Filament\Forms\Components\FileUpload;
+
 
 class CustomerResource extends Resource
 {
@@ -178,7 +180,18 @@ class CustomerResource extends Resource
                         ->options([
                             'yes' => 'Yes',
                             'no' => 'No',
-                        ]),
+                        ])
+                        ->live(),
+
+                    FileUpload::make('attachment_file')
+                        ->label('Upload Attachment')
+                        ->disk('public')
+                        ->directory('customer-attachments')
+                        ->preserveFilenames()
+                        ->downloadable()
+                        ->openable()
+                        ->visible(fn (Get $get): bool => $get('attachment_required') === 'yes')
+                        ->required(fn (Get $get): bool => $get('attachment_required') === 'yes'),
                 ])
                 ->visible(fn (Get $get): bool => $get('journey_status') === 'sanctioned')
                 ->columns(2),
@@ -204,9 +217,20 @@ class CustomerResource extends Resource
 
                 Tables\Columns\TextColumn::make('mobile_no')
                     ->label('Mobile No')
+                    ->formatStateUsing(function (?string $state): string {
+                        if (blank($state) || strlen($state) < 4) {
+                            return $state ?? '-';
+                        }
+
+                        return substr($state, 0, 4) . 'XXXXXX';
+                        })
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('email')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('loan_applied')
+                    ->label('Loan Applied')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('eligibility_status')

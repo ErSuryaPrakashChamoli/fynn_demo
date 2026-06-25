@@ -22,7 +22,16 @@ class CustomerInfolist
             Section::make('Customer Details')
                 ->schema([
                     TextEntry::make('customer_name')->label('Customer Name'),
-                    TextEntry::make('mobile_no')->label('Mobile No'),
+
+                    TextEntry::make('mobile_no')
+                    ->label('Mobile No')
+                    ->formatStateUsing(function (?string $state): string {
+                            if (blank($state) || strlen($state) < 4) {
+                                return $state ?? '-';
+                            }
+
+                            return substr($state, 0, 4) . 'XXXXXX';
+                        }),
                     TextEntry::make('email')->label('Email'),
                     TextEntry::make('pan_number')->label('PAN Number'),
                     TextEntry::make('job_location')->label('Job Location'),
@@ -58,6 +67,11 @@ class CustomerInfolist
                     TextEntry::make('payout_rate')->label('Payout Rate'),
                     TextEntry::make('bank_condition')->label('Bank Condition'),
                     TextEntry::make('attachment_required')->label('Attachment Required'),
+
+                    TextEntry::make('attachment_file')
+                        ->label('Attachment File')
+                        ->url(fn ($state) => $state ? asset('storage/' . $state) : null, shouldOpenInNewTab: true)
+                        ->openUrlInNewTab(),
                 ])
                 ->columns(2),
         ]);

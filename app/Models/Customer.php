@@ -32,5 +32,6 @@ class Customer extends Model
         'payout_rate',
         'bank_condition',
         'attachment_required',
+        'attachment_file'
     ];
 }
