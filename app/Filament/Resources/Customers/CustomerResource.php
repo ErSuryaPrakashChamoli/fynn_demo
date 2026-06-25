@@ -18,6 +18,7 @@ use Filament\Tables\Table;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
 
 use Filament\Schemas\Components\Section;
 
@@ -229,11 +230,12 @@ class CustomerResource extends Resource
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+                ViewAction::make(),
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),
             ]);
-            
+
         // return CustomersTable::configure($table);
     }
 
