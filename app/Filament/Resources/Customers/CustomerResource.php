@@ -81,18 +81,77 @@ class CustomerResource extends Resource
                         ->label('Current Location')
                         ->maxLength(255),
 
-                    TextInput::make('company_category')
+                    Select::make('company_category')
                         ->label('Company Category')
+                        ->options([
+                            'private_limited' => 'Private Limited',
+                            'public_limited' => 'Public Limited',
+                            'mnc' => 'MNC',
+                            'government' => 'Government',
+                            'semi_government' => 'Semi Government',
+                            'psu' => 'PSU',
+                            'proprietorship' => 'Proprietorship',
+                            'partnership' => 'Partnership',
+                            'llp' => 'LLP',
+                            'startup' => 'Startup',
+                            'self_employed' => 'Self Employed',
+                        ])
+                        ->searchable()
+                        ->preload()
+                        ->required(),
+                    Select::make('loan_applied')
+                        ->label('Loan Applied For')
+                        ->options([
+                            'personal_loan' => 'Personal Loan',
+                            'business_loan' => 'Business Loan',
+                            'home_loan' => 'Home Loan',
+                            'car_loan' => 'Car Loan',
+                            'education_loan' => 'Education Loan',
+                            'gold_loan' => 'Gold Loan',
+                            'lap' => 'Loan Against Property',
+                            'credit_card' => 'Credit Card',
+                            'overdraft' => 'Overdraft',
+                            'other' => 'Other',
+                        ])
+                        ->searchable()
+                        ->preload()
+                        ->live()
+                        ->required(),
+
+                    TextInput::make('other_loan_applied')
+                        ->label('Other Loan Type')
+                        ->visible(fn (Get $get): bool => $get('loan_applied') === 'other')
+                        ->required(fn (Get $get): bool => $get('loan_applied') === 'other')
                         ->maxLength(255),
 
-                    TextInput::make('bank_eligible_for')
+                    Select::make('bank_eligible_for')
                         ->label('Bank Eligible For')
-                        ->maxLength(255),
+                        ->options([
+                            'HDFC Bank' => 'HDFC Bank',
+                            'ICICI Bank' => 'ICICI Bank',
+                            'Axis Bank' => 'Axis Bank',
+                            'State Bank of India' => 'State Bank of India',
+                            'Kotak Mahindra Bank' => 'Kotak Mahindra Bank',
+                            'IndusInd Bank' => 'IndusInd Bank',
+                            'Yes Bank' => 'Yes Bank',
+                            'Punjab National Bank' => 'Punjab National Bank',
+                            'Bank of Baroda' => 'Bank of Baroda',
+                            'Canara Bank' => 'Canara Bank',
+                            'IDFC First Bank' => 'IDFC First Bank',
+                            'AU Small Finance Bank' => 'AU Small Finance Bank',
+                            'Other' => 'Other',
+                        ])
+                        ->searchable()
+                        ->preload()
+                        ->live()
+                        ->required(),
+                    TextInput::make('other_bank_eligible_for')
+                        ->label('Other Bank Name')
+                        ->maxLength(255)
+                        ->visible(fn (Get $get): bool => $get('bank_eligible_for') === 'Other')
+                        ->required(fn (Get $get): bool => $get('bank_eligible_for') === 'Other'),
 
-                    TextInput::make('loan_applied')
-                        ->label('Loan Applied')
-                        ->maxLength(255),
-                ])
+                    ])
                 ->columns(2),
 
             Section::make('Eligibility')
@@ -151,6 +210,12 @@ class CustomerResource extends Resource
 
             Section::make('Sanctioned Details')
                 ->schema([
+                    TextInput::make('application_no')
+                        ->label('Application No')
+                        ->maxLength(255),
+                    TextInput::make('lan_no')
+                        ->label('LAN No')
+                        ->maxLength(255), 
                     TextInput::make('sanctioned_bank')
                         ->label('Bank')
                         ->maxLength(255),
@@ -174,7 +239,6 @@ class CustomerResource extends Resource
                     Textarea::make('bank_condition')
                         ->label('Bank Condition')
                         ->rows(3),
-
                     Select::make('attachment_required')
                         ->label('Attachment Required')
                         ->options([
@@ -237,6 +301,15 @@ class CustomerResource extends Resource
                     ->label('Eligibility')
                     ->badge(),
 
+                Tables\Columns\TextColumn::make('bank_eligible_for')
+                    ->label('Bank Eligible For')
+                    ->formatStateUsing(function ($state, $record) {
+                        return $state === 'Other'
+                            ? ($record->other_bank_eligible_for ?: '-')
+                            : $state;
+                    })
+                    ->searchable(),
+
                 Tables\Columns\TextColumn::make('journey_status')
                     ->label('Journey')
                     ->badge(),
@@ -246,6 +319,14 @@ class CustomerResource extends Resource
 
                 Tables\Columns\TextColumn::make('sanctioned_loan_amount')
                     ->label('Loan Amount'),
+
+                Tables\Columns\TextColumn::make('application_no')
+                    ->label('Application No')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('lan_no')
+                    ->label('LAN No')
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

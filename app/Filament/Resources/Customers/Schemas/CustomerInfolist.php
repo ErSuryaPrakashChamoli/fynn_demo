@@ -39,7 +39,13 @@ class CustomerInfolist
                     TextEntry::make('salary')->label('Salary'),
                     TextEntry::make('current_location')->label('Current Location'),
                     TextEntry::make('company_category')->label('Company Category'),
-                    TextEntry::make('bank_eligible_for')->label('Bank Eligible For'),
+                    TextEntry::make('bank_eligible_for')
+                                ->label('Bank Eligible For')
+                                ->formatStateUsing(function ($state, $record) {
+                                    return $state === 'Other'
+                                        ? ($record->other_bank_eligible_for ?: '-')
+                                        : $state;
+                                }),
                     TextEntry::make('loan_applied')->label('Loan Applied'),
                 ])
                 ->columns(2),
@@ -60,6 +66,8 @@ class CustomerInfolist
 
             Section::make('Sanctioned Details')
                 ->schema([
+                    TextEntry::make('application_no')->label('Application No'),
+                    TextEntry::make('lan_no')->label('LAN No'),
                     TextEntry::make('sanctioned_bank')->label('Bank'),
                     TextEntry::make('sanctioned_loan_amount')->label('Loan Amount'),
                     TextEntry::make('cashback')->label('Cashback'),
