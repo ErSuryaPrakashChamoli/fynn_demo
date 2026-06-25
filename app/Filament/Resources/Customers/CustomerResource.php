@@ -74,9 +74,17 @@ class CustomerResource extends Resource
                         ->maxLength(255),
 
                     TextInput::make('salary')
-                        ->numeric()
-                        ->label('Salary'),
-
+                        ->label('Salary')
+                        ->prefix('₹')
+                        ->required()
+                        ->live(onBlur: true)
+                        ->afterStateHydrated(function ($component, $state) {
+                            if (filled($state)) {
+                                $component->state(number_format((float) $state, 0, '.', ','));
+                            }
+                        })
+                        ->dehydrateStateUsing(fn ($state) => filled($state) ? str_replace(',', '', $state) : null)
+                        ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) str_replace(',', '', $state), 0, '.', ',') : null),
                     TextInput::make('current_location')
                         ->label('Current Location')
                         ->maxLength(255),
@@ -296,6 +304,10 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('loan_applied')
                     ->label('Loan Applied')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('salary')
+                    ->label('Salary')
+                    ->formatStateUsing(fn ($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('eligibility_status')
                     ->label('Eligibility')
