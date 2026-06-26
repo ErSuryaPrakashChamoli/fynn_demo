@@ -52,7 +52,8 @@ class CustomerResource extends Resource
         return $schema->schema([
             Section::make('Customer Loan Journey')
                 ->schema([
-                    View::make('filament.components.customer-journey-progress'),
+                    View::make('filament.components.customer-journey-progress')
+                        ->key('customerJourneyProgress'),
                 ])
                 ->columnSpanFull(),
 
@@ -212,7 +213,8 @@ class CustomerResource extends Resource
                             'sanctioned' => 'Sanctioned',
                         ])
                         ->required()
-                        ->live(),
+                        ->live()
+                        ->partiallyRenderComponentsAfterStateUpdated(['customerJourneyProgress']),
 
                     Select::make('journey_not_approved_reason')
                         ->label('Not Approved Reason')

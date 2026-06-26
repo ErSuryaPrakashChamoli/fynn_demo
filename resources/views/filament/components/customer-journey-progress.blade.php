@@ -1,5 +1,7 @@
 @php
-    $rawStatus = $get('journey_status');
+    $rawStatus = isset($status)
+        ? $status
+        : (isset($get) ? $get('journey_status') : null);
 
     $status = is_string($rawStatus) ? $rawStatus : null;
 
@@ -34,9 +36,9 @@
     };
 
     $progressWidth = match ($currentStep) {
-        1 => '12%',
-        2 => '42%',
-        3 => '72%',
+        1 => '0%',
+        2 => '33.333%',
+        3 => '66.666%',
         4 => '100%',
         default => '0%',
     };
@@ -82,12 +84,12 @@
         </div>
     @else
         <div class="relative pt-2">
-            <div class="absolute left-0 right-0 top-7 h-1 rounded bg-gray-200"></div>
-
-            <!-- <div
-                class="absolute left-0 top-7 h-1 rounded bg-primary-600 transition-all duration-300"
-                style="width: {{ $progressWidth }};"
-            ></div> -->
+            <div class="relative h-1 rounded bg-gray-200" style="margin-left: 12.5%; margin-right: 12.5%;">
+                <div
+                    class="absolute inset-y-0 left-0 h-1 rounded bg-primary-600 transition-all duration-300"
+                    style="width: {{ $progressWidth }};"
+                ></div>
+            </div>
 
             <div class="relative grid grid-cols-4 gap-4">
                 @foreach ($steps as $step)
