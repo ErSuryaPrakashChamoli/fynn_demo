@@ -247,7 +247,15 @@ class CustomerResource extends Resource
                         ->visible(fn (Get $get): bool => $get('journey_status') === 'not_approved')
                         ->required(fn (Get $get): bool => $get('journey_status') === 'not_approved'),
                 ])
-                ->columns(2),
+                ->columns(2)
+                ->disabled(function (): bool {
+                    $user = Filament::auth()->user();
+
+                    return ! $user instanceof \App\Models\User || ! $user->hasAnyRole([
+                        'Admin',
+                        'Manager',
+                    ]);
+                }),
 
             Section::make('Sanctioned Details')
                 ->schema([
