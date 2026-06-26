@@ -31,5 +31,10 @@ class Employee extends Model
     {
         return $this->belongsTo(Employee::class, 'manager_id');
     }
+
+    public function user()
+    {
+        return $this->hasOne(User::class);
+    }
     
 }
