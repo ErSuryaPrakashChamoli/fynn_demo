@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteBulkAction;
@@ -35,6 +36,8 @@ use Filament\Forms\Components\FileUpload;
 
 use Filament\Schemas\Components\Text;
 use Illuminate\Support\HtmlString;
+
+use Filament\Facades\Filament;
 
 
 
@@ -177,14 +180,30 @@ class CustomerResource extends Resource
 
             Section::make('Eligibility')
                 ->schema([
+
+                    // Select::make('eligibility_status')
+                    //     ->label('Eligible / Not Eligible')
+                    //     ->options([
+                    //         'eligible' => 'Eligible',
+                    //         'not_eligible' => 'Not Eligible',
+                    //     ])
+                    //     ->required()
+                    //     ->live(),
                     Select::make('eligibility_status')
-                        ->label('Eligible / Not Eligible')
+                        ->label('Eligibility')
                         ->options([
                             'eligible' => 'Eligible',
                             'not_eligible' => 'Not Eligible',
                         ])
-                        ->required()
-                        ->live(),
+                        ->live()
+                        ->disabled(function (): bool {
+                            $user = Filament::auth()->user();
+
+                            return ! $user instanceof User || ! $user->hasAnyRole([
+                                'Admin',
+                                'Manager',
+                            ]);
+                        }),
 
                     Select::make('eligibility_reason')
                         ->label('Not Eligible Reason')

@@ -37,6 +37,8 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Text;
 use Illuminate\Support\HtmlString;
 
+use Spatie\Permission\Models\Role;
+
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -77,15 +79,13 @@ class UserResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true),
 
-                        Select::make('role')
-                            ->options([
-                                'admin' => 'Admin',
-                                'manager' => 'Manager',
-                                'supervisor' => 'Supervisor',
-                                'employee' => 'Employee',
-                            ])
-                            ->default('employee')
-                            ->required(),
+                    Select::make('roles')
+                            ->relationship('roles', 'name')
+                            ->multiple(false)
+                            ->preload()
+                            ->searchable()
+                            ->required()
+                            ->label('Role'),
 
                        TextInput::make('password')
                             ->label('Password')
@@ -130,13 +130,17 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
 
-                Tables\Columns\BadgeColumn::make('role')
-                    ->colors([
-                        'danger' => 'admin',
-                        'warning' => 'manager',
-                        'info' => 'supervisor',
-                        'success' => 'employee',
-                    ]),
+                // Tables\Columns\BadgeColumn::make('role')
+                //     ->colors([
+                //         'danger' => 'admin',
+                //         'warning' => 'manager',
+                //         'info' => 'supervisor',
+                //         'success' => 'employee',
+                //     ]),
+
+               Tables\Columns\TextColumn::make('roles.name')
+                ->badge()
+                ->label('Role'),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
