@@ -52,17 +52,28 @@ class CustomerResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'customer_name';
 
-   public static function form(Schema $schema): Schema
-    {
+    public static function form(Schema $schema): Schema
+      {
         return $schema
             ->columns(2)
             ->schema([
-                Section::make('Customer Loan Journey')
-                    ->schema([
-                        View::make('filament.components.customer-journey-progress')
-                            ->key('customerJourneyProgress'),
-                    ])
-                    ->columnSpanFull(),
+                // Section::make('Customer Loan Journey')
+                //     ->schema([
+                //         View::make('filament.components.customer-journey-progress')
+                //             ->key('customerJourneyProgress'),
+                //     ])
+                //     ->columnSpanFull(),
+
+                View::make('filament.components.customer-journey-progress')
+                    ->key('customerJourneyProgress')
+                    ->columnSpanFull()
+                    ->visibleOn('edit') // Only shows on Edit page
+                    ->extraAttributes([
+                        // 'self-start' is the magic class that makes sticky work in CSS Grid
+                        'class' => 'sticky z-50 self-start',
+                        // Force the top margin so it sits neatly under the Filament navbar
+                        'style' => 'top: 5.5rem;', 
+                    ]),
 
                 Section::make('Customer Basic Details')
                     ->schema([
