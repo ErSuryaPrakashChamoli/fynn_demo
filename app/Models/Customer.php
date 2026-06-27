@@ -36,5 +36,12 @@ class Customer extends Model
         'other_bank_eligible_for',
         'application_no',
         'lan_no',
+        'documentation_status',
+        'pending_document',
+        'sfl_remarks',
+        'underwriting_remarks',
+        'approved_remarks',
+        'sanctioned_remarks',
+        'not_approved_remarks',
     ];
 }

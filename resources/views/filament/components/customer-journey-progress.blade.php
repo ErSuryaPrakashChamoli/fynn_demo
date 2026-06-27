@@ -1,19 +1,11 @@
 @php
-    $rawStatus = isset($status)
-        ? $status
-        : (isset($get) ? $get('journey_status') : null);
-
-    $status = is_string($rawStatus) ? $rawStatus : null;
-
-    $statusLabel = $status
-        ? ucwords(str_replace('_', ' ', $status))
-        : '';
+    $status = $status ?? null;
 
     $steps = [
-        ['key' => 'sfl', 'label' => 'SFL', 'number' => 1],
-        ['key' => 'underwriting', 'label' => 'Underwriting', 'number' => 2],
-        ['key' => 'approved', 'label' => 'Approved', 'number' => 3],
-        ['key' => 'sanctioned', 'label' => 'Sanctioned', 'number' => 4],
+        ['key' => 'sfl', 'label' => 'SFL'],
+        ['key' => 'underwriting', 'label' => 'Underwriting'],
+        ['key' => 'approved', 'label' => 'Approved'],
+        ['key' => 'sanctioned', 'label' => 'Sanctioned'],
     ];
 
     $currentStep = match ($status) {
@@ -24,92 +16,135 @@
         default => 0,
     };
 
-    $isRejected = $status === 'not_approved';
-
-    $reasonText = match ($status) {
-        'sfl' => 'Customer file is currently at SFL stage.',
-        'underwriting' => 'File is under bank / underwriting review.',
-        'approved' => 'Loan is approved and ready for sanction processing.',
-        'sanctioned' => 'Loan has been sanctioned successfully.',
-        'not_approved' => 'Loan was not approved.',
-        default => 'Select a journey status to see progress.',
+    $progress = match ($currentStep) {
+        1 => 0,
+        2 => 33,
+        3 => 66,
+        4 => 100,
+        default => 0,
     };
 
-    $progressWidth = match ($currentStep) {
-        1 => '0%',
-        2 => '33.333%',
-        3 => '66.666%',
-        4 => '100%',
-        default => '0%',
-    };
+    $statusLabel = $status
+        ? ucwords(str_replace('_', ' ', $status))
+        : 'Pending';
 
     $badgeClasses = match ($status) {
-        'not_approved' => 'bg-red-100 text-red-700',
         'sanctioned' => 'bg-green-100 text-green-700',
         'approved' => 'bg-blue-100 text-blue-700',
         'underwriting' => 'bg-yellow-100 text-yellow-700',
         'sfl' => 'bg-gray-100 text-gray-700',
-        default => 'bg-gray-100 text-gray-700',
+        'not_approved' => 'bg-red-100 text-red-700',
+        default => 'bg-gray-100 text-gray-600',
     };
 @endphp
 
-<div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-    <div class="mb-4 flex items-center justify-between">
+<div class="sticky top-4 z-50 rounded-xl border border-gray-200 bg-white shadow-lg">
+
+    <div class="flex items-center justify-between border-b px-6 py-4">
+
         <div>
-            <h3 class="text-lg font-semibold text-gray-900">Customer Loan Journey</h3>
-            <p class="text-sm text-gray-500">{{ $reasonText }}</p>
+            <h2 class="text-lg font-bold">
+                Customer Loan Journey
+            </h2>
+
+            <p class="text-sm text-gray-500">
+                Current Stage : {{ $statusLabel }}
+            </p>
         </div>
 
-        @if ($status)
-            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $badgeClasses }}">
-                {{ $statusLabel }}
-            </span>
-        @endif
+        <span class="rounded-full px-4 py-2 text-sm font-semibold {{ $badgeClasses }}">
+            {{ $statusLabel }}
+        </span>
+
     </div>
 
-    @if ($isRejected)
-        <div class="rounded-xl border border-red-200 bg-red-50 p-4">
-            <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-sm font-bold text-white">
-                    !
-                </div>
+    <div class="p-8">
 
-                <div>
-                    <div class="font-semibold text-red-700">Journey Stopped</div>
-                    <div class="text-sm text-red-600">
-                        Customer loan journey is marked as <strong>Not Approved</strong>.
-                    </div>
-                </div>
-            </div>
-        </div>
-    @else
-        <div class="relative pt-2">
-            <div class="relative h-1 rounded bg-gray-200" style="margin-left: 12.5%; margin-right: 12.5%;">
+        {{-- Progress Bar --}}
+        <div class="relative mb-10">
+
+            <div class="h-2 rounded-full bg-gray-200">
+
                 <div
-                    class="absolute inset-y-0 left-0 h-1 rounded bg-primary-600 transition-all duration-300"
-                    style="width: {{ $progressWidth }};"
+                    class="h-2 rounded-full bg-primary-600 transition-all duration-700"
+                    style="width: {{ $progress }}%;"
                 ></div>
+
             </div>
 
-            <div class="relative grid grid-cols-4 gap-4">
-                @foreach ($steps as $step)
-                    @php
-                        $done = $currentStep >= $step['number'];
-                    @endphp
+        </div>
 
-                    <div class="flex flex-col items-center text-center">
-                        <div
-                            class="z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold {{ $done ? 'border-primary-600 bg-primary-600 text-white' : 'border-gray-300 bg-white text-gray-500' }}"
-                        >
-                            {{ $step['number'] }}
-                        </div>
+        {{-- Steps --}}
+        <div class="grid grid-cols-4 gap-4">
 
-                        <div class="mt-3 text-sm font-medium {{ $done ? 'text-gray-900' : 'text-gray-500' }}">
-                            {{ $step['label'] }}
-                        </div>
+            @foreach($steps as $step)
+
+                @php
+                    $active = $currentStep >= array_search($step['key'], array_column($steps,'key')) + 1;
+                    $current = $currentStep == array_search($step['key'], array_column($steps,'key')) + 1;
+                @endphp
+
+                <div class="text-center">
+
+                    <div
+                        class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-4 font-bold
+
+                        {{ $active ? 'border-primary-600 bg-primary-600 text-white' : 'border-gray-300 bg-white text-gray-500' }}
+
+                        {{ $current ? 'ring-4 ring-primary-100' : '' }}
+                        "
+                    >
+
+                        @if($active)
+
+                            ✓
+
+                        @else
+
+                            {{ array_search($step['key'], array_column($steps,'key')) + 1 }}
+
+                        @endif
+
                     </div>
-                @endforeach
+
+                    <div class="mt-3 text-sm font-semibold">
+
+                        {{ $step['label'] }}
+
+                    </div>
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-4 border-t bg-gray-50">
+
+        <div class="p-4 text-center">
+            <div class="text-xs text-gray-500">Current</div>
+            <div class="font-semibold">{{ $statusLabel }}</div>
+        </div>
+
+        <div class="p-4 text-center">
+            <div class="text-xs text-gray-500">Progress</div>
+            <div class="font-semibold">{{ $progress }}%</div>
+        </div>
+
+        <div class="p-4 text-center">
+            <div class="text-xs text-gray-500">Completed</div>
+            <div class="font-semibold">{{ $currentStep }}/4</div>
+        </div>
+
+        <div class="p-4 text-center">
+            <div class="text-xs text-gray-500">Status</div>
+            <div class="font-semibold">
+                {{ $status == 'sanctioned' ? 'Completed' : 'In Progress' }}
             </div>
         </div>
-    @endif
+
+    </div>
+
 </div>

@@ -52,7 +52,7 @@ class CustomerResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'customer_name';
 
-     public static function form(Schema $schema): Schema
+   public static function form(Schema $schema): Schema
     {
         return $schema
             ->columns(2)
@@ -215,7 +215,7 @@ class CustomerResource extends Resource
                                 'not_approved' => 'Not Approved',
                                 'sanctioned' => 'Sanctioned',
                             ])
-                            ->live(), // Removed partiallyRenderComponentsAfterStateUpdated so the entire form evaluates reactively
+                            ->live(),
 
                         Select::make('journey_not_approved_reason')
                             ->label('Not Approved Reason')
@@ -226,8 +226,15 @@ class CustomerResource extends Resource
                                 'low_salary' => 'Low Salary',
                                 'location_issue' => 'Location',
                             ])
-                            ->visible(fn(Get $get): bool => $get('journey_status') === 'not_approved')
-                            ->required(fn(Get $get): bool => $get('journey_status') === 'not_approved'),
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'not_approved')
+                            ->required(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'not_approved'),
+
+                        // Added Not Approved Remarks in the Journey section so it stays visible during rejection
+                        Textarea::make('not_approved_remarks')
+                            ->label('Rejection Remarks')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'not_approved'),
                     ])
                     ->columns(2)
                     ->columnSpan(1)
@@ -235,6 +242,11 @@ class CustomerResource extends Resource
 
                 Section::make('Sanctioned Details')
                     ->schema([
+                        TextInput::make('channel')
+                            ->label('Channel')
+                            ->maxLength(255)
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
+                            
                         TextInput::make('application_no')
                             ->label('Application No')
                             ->maxLength(255),
@@ -272,12 +284,7 @@ class CustomerResource extends Resource
                                 'residence_proof' => 'Residence Proof',
                                 'other' => 'Other',
                             ])
-                            ->visible(fn(Get $get): bool => $get('documentation_status') === 'pending'),
-
-                        Textarea::make('remarks')
-                            ->label('Remark')
-                            ->rows(3)
-                            ->columnSpanFull(),
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('documentation_status')) === 'pending'),
 
                         Select::make('underwriting_status')
                             ->label('Underwriting Status')
@@ -287,22 +294,41 @@ class CustomerResource extends Resource
                                 'rejected' => 'Rejected',
                                 'hold' => 'Hold',
                             ])
-                            ->visible(fn(Get $get): bool => $get('journey_status') === 'underwriting'),
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting'),
 
                         TextInput::make('approved_loan_amount')
                             ->label('Approved Loan Amount')
                             ->numeric()
-                            ->visible(fn(Get $get): bool => $get('journey_status') === 'approved'),
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved'),
+
+                        // Separated Remarks Fields based on Journey Status
+                        Textarea::make('sfl_remarks')
+                            ->label('SFL Remarks')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'sfl'),
+
+                        Textarea::make('underwriting_remarks')
+                            ->label('Underwriting Remarks')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting'),
 
                         Textarea::make('approved_remarks')
                             ->label('Approved Remarks')
                             ->rows(3)
                             ->columnSpanFull()
-                            ->visible(fn(Get $get): bool => $get('journey_status') === 'approved'),
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved'),
+
+                        Textarea::make('sanctioned_remarks')
+                            ->label('Sanctioned Remarks')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
                     ])
                     ->columns(2)
                     ->columnSpan(1)
-                    ->visible(fn(Get $get): bool => in_array($get('journey_status'), ['sfl', 'underwriting', 'approved', 'sanctioned'])),
+                    ->visible(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sfl', 'underwriting', 'approved', 'sanctioned'])),
             ]);
     }
 
@@ -313,12 +339,26 @@ class CustomerResource extends Resource
 
     public static function table(Table $table): Table
     {
-
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('application_no')
+                    ->label('Application No')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('lan_no')
+                    ->label('LAN No')
+                    ->searchable()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('customer_name')
                     ->label('Customer Name')
                     ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('sanctioned_loan_amount')
+                    ->label('Loan Amount')
+                    ->formatStateUsing(fn($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('mobile_no')
@@ -333,11 +373,13 @@ class CustomerResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('loan_applied')
                     ->label('Loan Applied')
                     ->searchable(),
+                    
                 Tables\Columns\TextColumn::make('salary')
                     ->label('Salary')
                     ->formatStateUsing(fn($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-')
@@ -350,7 +392,7 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('bank_eligible_for')
                     ->label('Bank Eligible For')
                     ->formatStateUsing(function ($state, $record) {
-                        return $state === 'Other'
+                        return strtolower((string) $state) === 'other'
                             ? ($record->other_bank_eligible_for ?: '-')
                             : $state;
                     })
@@ -361,33 +403,27 @@ class CustomerResource extends Resource
                     ->badge(),
 
                 Tables\Columns\TextColumn::make('sanctioned_bank')
-                    ->label('Bank'),
-
-                Tables\Columns\TextColumn::make('sanctioned_loan_amount')
-                    ->label('Loan Amount'),
-
-                Tables\Columns\TextColumn::make('application_no')
-                    ->label('Application No')
+                    ->label('Bank')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('lan_no')
-                    ->label('LAN No')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('channel')
+                    ->label('Channel')
+                    ->searchable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
-                ViewAction::make(),
             ])
             ->toolbarActions([
-                DeleteBulkAction::make(),
+               DeleteBulkAction::make(),
             ]);
-
-        // return CustomersTable::configure($table);
     }
 
     public static function getRelations(): array
