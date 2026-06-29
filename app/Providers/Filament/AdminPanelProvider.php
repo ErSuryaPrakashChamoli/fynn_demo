@@ -49,6 +49,7 @@ class AdminPanelProvider extends PanelProvider
                 TargetStats::class,
                 DailyCommitmentStats::class,
                 AchievementChart::class,
+               
             ])
             ->middleware([
                 EncryptCookies::class,
