@@ -52,12 +52,8 @@ class CustomerInfolist
                     TextEntry::make('eligibility_reason')
                         ->label('Not Eligible Reason')
                         ->visible(fn ($record): bool => strtolower((string) $record->eligibility_status) === 'not_eligible'),
-                ])
-                ->columns(2),
 
-            Section::make('Journey')
-                ->schema([
-                    TextEntry::make('company_category')
+                        TextEntry::make('company_category')
                         ->label('Company Category')
                         ->formatStateUsing(fn ($state) => $state ?: '-'),
 
@@ -94,7 +90,10 @@ class CustomerInfolist
                         ->columnSpanFull()
                         ->visible(fn ($record): bool => filled($record->not_approved_remarks)),
                 ])
-                ->columns(2),
+                ->columnSpanFull()
+                ->columns(3),
+
+           
 
             Section::make('Sanctioned Details')
                 ->schema([
@@ -171,5 +170,7 @@ class CustomerInfolist
                     blank($record->sanctioned_remarks)
                 ),
         ]);
+
+        
     }
 }
