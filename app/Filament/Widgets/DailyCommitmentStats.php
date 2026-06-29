@@ -22,17 +22,17 @@ class DailyCommitmentStats extends StatsOverviewWidget
         $documentationPending = Customer::where('documentation_status', 'pending')->count();
 
          return [
-            Stat::make('Eligible Customers', $eligible)
+            Stat::make('Eligible OTP', $eligible)
                 ->description('Eligible for Loan')
                 ->color('success')
                 ->icon('heroicon-o-check-circle'),
 
-            Stat::make('Total Customers', $totalCustomers)
+            Stat::make('No of OTPS', $totalCustomers)
                 ->description('All Applications')
                 ->color('primary')
                 ->icon('heroicon-o-users'),
 
-            Stat::make('Loan Sanctioned', $sanctioned)
+            Stat::make('Login', $sanctioned)
                 ->description('Sanctioned Cases')
                 ->color('warning')
                 ->icon('heroicon-o-banknotes'),
