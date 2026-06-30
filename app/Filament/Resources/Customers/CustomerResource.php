@@ -39,6 +39,8 @@ use Illuminate\Support\HtmlString;
 
 use Filament\Facades\Filament;
 
+use Filament\Forms\Components\CheckboxList;
+
 
 
 
@@ -148,23 +150,28 @@ class CustomerResource extends Resource
 
                 Section::make('Journey')
                     ->schema([
-                        Select::make('company_category')
-                            ->label('Company Category')
-                            ->options([
-                                'private_limited' => 'Private Limited',
-                                'public_limited' => 'Public Limited',
-                                'mnc' => 'MNC',
-                                'government' => 'Government',
-                                'semi_government' => 'Semi Government',
-                                'psu' => 'PSU',
-                                'proprietorship' => 'Proprietorship',
-                                'partnership' => 'Partnership',
-                                'llp' => 'LLP',
-                                'startup' => 'Startup',
-                                'self_employed' => 'Self Employed',
-                            ])
-                            ->searchable()
-                            ->preload(),
+
+                         TextInput::make('company_category')
+                            ->label('Company Name')
+                            ->maxLength(255),
+
+                        // Select::make('company_category')
+                        //     ->label('Company Name')
+                        //     ->options([
+                        //         'private_limited' => 'Private Limited',
+                        //         'public_limited' => 'Public Limited',
+                        //         'mnc' => 'MNC',
+                        //         'government' => 'Government',
+                        //         'semi_government' => 'Semi Government',
+                        //         'psu' => 'PSU',
+                        //         'proprietorship' => 'Proprietorship',
+                        //         'partnership' => 'Partnership',
+                        //         'llp' => 'LLP',
+                        //         'startup' => 'Startup',
+                        //         'self_employed' => 'Self Employed',
+                        //     ])
+                        //     ->searchable()
+                        //     ->preload(),
 
                         Select::make('loan_applied')
                             ->label('Loan Applied For')
@@ -282,20 +289,38 @@ class CustomerResource extends Resource
                             ])
                             ->live(),
 
-                        Select::make('pending_document')
-                            ->label('Pending Document')
+                        // Select::make('pending_document')
+                        //     ->label('Pending Document')
+                        //     ->options([
+                        //         'aadhaar_card' => 'Aadhaar Card',
+                        //         'pan_card' => 'PAN Card',
+                        //         'salary_slip' => 'Salary Slip',
+                        //         'bank_statement' => 'Bank Statement',
+                        //         'itr' => 'ITR',
+                        //         'photo' => 'Photo',
+                        //         'office_id_card' => 'Office ID Card',
+                        //         'residence_proof' => 'Residence Proof',
+                        //         'other' => 'Other',
+                        //     ])
+                        //     ->visible(fn(Get $get): bool => strtolower((string) $get('documentation_status')) === 'pending'),
+
+                        CheckboxList::make('pending_document')
+                            ->label('Pending Documents')
                             ->options([
-                                'aadhaar_card' => 'Aadhaar Card',
-                                'pan_card' => 'PAN Card',
-                                'salary_slip' => 'Salary Slip',
-                                'bank_statement' => 'Bank Statement',
-                                'itr' => 'ITR',
-                                'photo' => 'Photo',
-                                'office_id_card' => 'Office ID Card',
-                                'residence_proof' => 'Residence Proof',
-                                'other' => 'Other',
+                                'aadhaar_card'     => 'Aadhaar Card',
+                                'pan_card'         => 'PAN Card',
+                                'salary_slip'      => 'Salary Slip',
+                                'bank_statement'   => 'Bank Statement',
+                                'itr'              => 'ITR',
+                                'photo'            => 'Photo',
+                                'office_id_card'   => 'Office ID Card',
+                                'residence_proof'  => 'Residence Proof',
+                                'other'            => 'Other',
                             ])
-                            ->visible(fn(Get $get): bool => strtolower((string) $get('documentation_status')) === 'pending'),
+                            ->columns(2)
+                            ->bulkToggleable()
+                            ->searchable()
+                            ->visible(fn (Get $get): bool => strtolower((string) $get('documentation_status')) === 'pending'),
 
                         Select::make('underwriting_status')
                             ->label('Underwriting Status')
