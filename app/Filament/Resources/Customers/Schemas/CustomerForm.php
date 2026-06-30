@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Hash;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
 use Filament\Forms\Components\CheckboxList;
+use App\Models\City;
+use Illuminate\Support\Str;
 
 
 class CustomerForm
@@ -70,52 +72,141 @@ class CustomerForm
 
                 Section::make('Customer Basic Details')
                     ->schema([
+                        // TextInput::make('customer_name')
+                        //     ->label('Customer Name')
+                        //     ->required()
+                            
+                        //     ->maxLength(255),
                         TextInput::make('customer_name')
-                            ->label('Customer Name')
-                            ->required()
-                            ->maxLength(255),
+                        ->label('Customer Name')
+                        ->required()
+                        ->maxLength(255)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $set('customer_name', Str::title($state));
+                        }),                            
 
+                        // TextInput::make('mobile_no')
+                        //     ->label('Mobile No')
+                        //     ->tel()
+                        //     ->required()
+                        //     ->maxLength(20),
+
+                       
                         TextInput::make('mobile_no')
-                            ->label('Mobile No')
-                            ->tel()
-                            ->required()
-                            ->maxLength(20),
+                        ->label('Mobile No')
+                        ->tel()
+                        ->required()
+                        ->numeric()
+                        ->minLength(10)
+                        ->maxLength(10)
+                        ->rule('digits:10')
+                        ->placeholder('9876543210')
+                        ->prefix('+91'),
 
                         TextInput::make('email')
                             ->email()
                             ->maxLength(255),
 
+                        // TextInput::make('pan_number')
+                        //     ->label('PAN Number')
+                        //       ->required()
+                        //     ->maxLength(20),
+
                         TextInput::make('pan_number')
                             ->label('PAN Number')
-                            ->maxLength(20),
+                            ->required()
+                            ->maxLength(10)
+                            ->minLength(10)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, callable $set) => $set('pan_number', strtoupper($state)))
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state))
+                            ->rule('regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/')
+                            ->validationMessages([
+                                'regex' => 'Please enter a valid PAN number (e.g. ABCDE1234F).',
+                            ])
+                            ->placeholder('ABCDE1234F'),
 
-                        TextInput::make('job_location')
-                            ->label('Job Location')
-                            ->maxLength(255),
+                        // TextInput::make('job_location')
+                        //     ->label('Job Location')
+                        //       ->required()
+                        //     ->maxLength(255),
 
-                        TextInput::make('residence_location')
-                            ->label('Residence Location')
-                            ->maxLength(255),
+                    Select::make('job_location')
+                    ->label('Job Location')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => City::query()
+                        ->where('is_active', 1)
+                        ->orderBy('city')
+                        ->get()
+                        ->pluck('city', 'city') // Saves city name as the value
+                    ),
+
+                        // TextInput::make('residence_location')
+                        //     ->label('Residence Location')
+                        //       ->required()
+                        //     ->maxLength(255),
+
+                    Select::make('residence_location')
+                    ->label('Residence Location')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => City::query()
+                        ->where('is_active', 1)
+                        ->orderBy('city')
+                        ->get()
+                        ->mapWithKeys(fn ($item) => [
+                            $item->city => "{$item->city}, {$item->state}" // Displays "Mumbai, Maharashtra" but saves "Mumbai"
+                        ])
+                    ),
+
+                        // TextInput::make('salary')
+                        //     ->label('Salary')
+                        //     ->prefix('₹')
+                        //     ->required()
+                        //     ->live(onBlur: true)
+                        //     ->afterStateHydrated(function ($component, $state) {
+                        //         if (filled($state)) {
+                        //             $component->state(number_format((float) $state, 0, '.', ','));
+                        //         }
+                        //     })
+                        //     ->dehydrateStateUsing(fn($state) => filled($state) ? str_replace(',', '', $state) : null)
+                        //     ->formatStateUsing(fn($state) => filled($state) ? number_format((float) str_replace(',', '', $state), 0, '.', ',') : null),
 
                         TextInput::make('salary')
                             ->label('Salary')
                             ->prefix('₹')
-                            ->required()
                             ->live(onBlur: true)
-                            ->afterStateHydrated(function ($component, $state) {
-                                if (filled($state)) {
-                                    $component->state(number_format((float) $state, 0, '.', ','));
-                                }
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('salary', indianCurrencyFormat($state));
                             })
-                            ->dehydrateStateUsing(fn($state) => filled($state) ? str_replace(',', '', $state) : null)
-                            ->formatStateUsing(fn($state) => filled($state) ? number_format((float) str_replace(',', '', $state), 0, '.', ',') : null),
+                            ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', $state)),
 
-                        TextInput::make('current_location')
-                            ->label('Current Location')
-                            ->maxLength(255),
+                        // TextInput::make('current_location')
+                        //     ->label('Current Location')
+                        //       ->required()
+                        //     ->maxLength(255),
+
+                    Select::make('current_location')
+                    ->label('Current Location')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => City::query()
+                        ->where('is_active', 1)
+                        ->orderBy('city')
+                        ->get()
+                        ->mapWithKeys(fn ($item) => [
+                            $item->city => "{$item->city}, {$item->state}" // Displays "Mumbai, Maharashtra" but saves "Mumbai"
+                        ])
+                    ),
 
                         Select::make('eligibility_status')
                             ->label('Eligibility')
+                              ->required()
                             ->options([
                                 'eligible' => 'Eligible',
                                 'not_eligible' => 'Not Eligible',
@@ -123,9 +214,17 @@ class CustomerForm
                             ->live()
                             ->disabled(fn (): bool => ! auth()->check() || ! auth()->user()?->hasAnyRole(['Admin', 'Manager'])),
 
-                            TextInput::make('move_to_employee')
-                            ->label('Move to Employee')
-                            ->maxLength(255),
+                            // TextInput::make('assign_to')
+                            // ->label('Assign to')
+                            //   ->required()
+                            // ->maxLength(255),
+
+                            Select::make('assign_to')
+                            ->label('Assign To')
+                            ->relationship('assignedTo', 'emp_name')
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
 
                         Select::make('eligibility_reason')
                             ->label('Not Eligible Reason')
@@ -141,14 +240,25 @@ class CustomerForm
                             ->required(fn(Get $get): bool => $get('eligibility_status') === 'not_eligible'),
                     ])
                     ->columns(2)
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->disabled(fn () => auth()->user()->hasAnyRole(['Employee'])),
 
                 Section::make('Journey')
                     ->schema([
 
-                         TextInput::make('company_category')
-                            ->label('Company Name')
-                            ->maxLength(255),
+                        //  TextInput::make('company_category')
+                        //     ->label('Company Name')
+                        //     ->maxLength(255),
+
+                        TextInput::make('company_category')
+                        ->label('Company Name')
+                        ->required()
+                        ->maxLength(255)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $set('company_category', Str::title($state));
+                        }),   
+                            
 
                         // Select::make('company_category')
                         //     ->label('Company Name')
@@ -357,7 +467,8 @@ class CustomerForm
                     ])
                     ->columns(2)
                     ->columnSpan(1)
-                    ->visible(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sfl', 'underwriting', 'approved', 'sanctioned'])),
+                    ->visible(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sfl', 'underwriting', 'approved', 'sanctioned']))
+                     ->hidden(fn () => auth()->user()->hasRole('Employee')),
             ]);
     }
 }

@@ -41,6 +41,9 @@ use Filament\Facades\Filament;
 
 use Filament\Forms\Components\CheckboxList;
 
+use Filament\Actions\ImportAction;
+use App\Filament\Imports\CustomerImporter;
+
 
 
 
@@ -57,7 +60,7 @@ class CustomerResource extends Resource
     public static function form(Schema $schema): Schema
       {
 
-      
+
 
       
 
@@ -73,6 +76,8 @@ class CustomerResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+          ->defaultSort('id', 'desc')
+        
             ->columns([
                 Tables\Columns\TextColumn::make('application_no')
                     ->label('Application No')
@@ -154,6 +159,13 @@ class CustomerResource extends Resource
                 EditAction::make(),
                 DeleteAction::make(),
             ])
+            ->headerActions([
+                ImportAction::make()
+                ->label('Import Customers')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('primary')
+                ->importer(CustomerImporter::class)
+                ])
             ->toolbarActions([
                DeleteBulkAction::make(),
             ]);

@@ -39,6 +39,11 @@ use Illuminate\Support\HtmlString;
 
 use Filament\Forms\Components\DatePicker;
 
+use Filament\Actions\ImportAction;
+use App\Filament\Imports\CustomerImporter;
+use App\Filament\Imports\EmployeeImporter;
+
+
 class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
@@ -107,6 +112,7 @@ class EmployeeResource extends Resource
     {
 
             return $table
+                ->defaultSort('id', 'desc')
                 ->columns([
 
                     Tables\Columns\TextColumn::make('emp_id')
@@ -141,6 +147,13 @@ class EmployeeResource extends Resource
                 EditAction::make(),
                 DeleteAction::make(),
                 ViewAction::make(),
+                ])
+                  ->headerActions([
+                ImportAction::make()
+                ->label('Import Employees')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('primary')
+                ->importer(EmployeeImporter::class)
                 ])
                 ->toolbarActions([
                     DeleteBulkAction::make(),

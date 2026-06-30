@@ -6,6 +6,7 @@ use Filament\Schemas\Schema;
 
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 
 class CustomerInfolist
 {
@@ -18,6 +19,17 @@ class CustomerInfolist
         //     ]);
 
            return $schema->schema([
+
+           View::make('filament.components.customer-journey-progress')
+                    ->key('customerJourneyProgress')
+                    ->columnSpanFull()
+                   
+                    ->extraAttributes([
+                        // 'self-start' is the magic class that makes sticky work in CSS Grid
+                        'class' => 'sticky z-50 self-start',
+                        // Force the top margin so it sits neatly under the Filament navbar
+                        'style' => 'top: 5.5rem;', 
+                    ]),
             Section::make('Customer Basic Details')
                 ->schema([
                     TextEntry::make('customer_name')
@@ -76,9 +88,14 @@ class CustomerInfolist
                         }),
 
                     TextEntry::make('journey_status')
-                        ->label('Journey')
+                        ->label('Journey Status')
                         ->badge()
                         ->formatStateUsing(fn ($state) => $state ?: '-'),
+                        TextEntry::make('assignedTo.emp_name')
+                        ->label('Assigned To')
+                        ->badge()
+                        ->color('primary')
+                        ->placeholder('Not Assigned'),
 
                     TextEntry::make('journey_not_approved_reason')
                         ->label('Not Approved Reason')
@@ -92,6 +109,7 @@ class CustomerInfolist
                 ])
                 ->columnSpanFull()
                 ->columns(3),
+             
 
            
 
