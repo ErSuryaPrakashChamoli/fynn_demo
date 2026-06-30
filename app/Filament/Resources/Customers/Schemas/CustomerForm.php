@@ -212,7 +212,12 @@ class CustomerForm
                                 'not_eligible' => 'Not Eligible',
                             ])
                             ->live()
-                            ->disabled(fn (): bool => ! auth()->check() || ! auth()->user()?->hasAnyRole(['Admin', 'Manager'])),
+                            // ->disabled(fn (): bool => ! auth()->check() || ! auth()->user()?->hasAnyRole(['Admin', 'Manager']))
+                            ->disabled(
+                                fn (string $operation): bool =>
+                                    $operation === 'edit' &&
+                                    (! auth()->check() || ! auth()->user()->hasAnyRole(['Admin', 'Manager']))
+                            ),
 
                             // TextInput::make('assign_to')
                             // ->label('Assign to')
@@ -241,7 +246,10 @@ class CustomerForm
                     ])
                     ->columns(2)
                     ->columnSpanFull()
-                    ->disabled(fn () => auth()->user()->hasAnyRole(['Employee'])),
+                    ->disabled(fn (string $operation): bool =>
+                    $operation === 'edit' &&
+                    auth()->user()->hasRole('Employee')
+                    ),
 
                 Section::make('Journey')
                     ->schema([
@@ -252,7 +260,7 @@ class CustomerForm
 
                         TextInput::make('company_category')
                         ->label('Company Name')
-                        ->required()
+                       
                         ->maxLength(255)
                         ->live()
                         ->afterStateUpdated(function ($state, callable $set) {

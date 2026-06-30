@@ -45,8 +45,7 @@ use Filament\Actions\ImportAction;
 use App\Filament\Imports\CustomerImporter;
 
 
-
-
+use Illuminate\Database\Eloquent\Builder;
 
 
 class CustomerResource extends Resource
@@ -57,15 +56,10 @@ class CustomerResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'customer_name';
 
+  
     public static function form(Schema $schema): Schema
       {
-
-
-
-      
-
          return CustomerForm::configure($schema);
-
     }
 
     public static function infolist(Schema $schema): Schema
@@ -187,4 +181,17 @@ class CustomerResource extends Resource
             'edit' => EditCustomer::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()->hasRole('Admin')) {
+            return $query;
+        }
+
+        return $query->where('employee_id', auth()->user()->employee_id);
+    }
+
+    
 }
