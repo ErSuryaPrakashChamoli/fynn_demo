@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Customer extends Model
 {
@@ -44,4 +45,39 @@ class Customer extends Model
         'sanctioned_remarks',
         'not_approved_remarks',
     ];
+
+
+
+    
+
+        protected static function booted(): void
+        {
+            static::creating(function ($customer) {
+
+                if (blank($customer->application_no)) {
+
+                    $date = now()->format('ymd'); // 260630
+
+                    $last = self::whereDate('created_at', today())
+                        ->where('application_no', 'like', "FA{$date}%")
+                        ->latest('id')
+                        ->first();
+
+                    $sequence = 1;
+
+                    if ($last) {
+                        $sequence = (int) substr($last->application_no, -6) + 1;
+                    }
+
+                    $customer->application_no = sprintf(
+                        'FA%s%06d',
+                        $date,
+                        $sequence
+                    );
+                }
+            });
+        }
+
+
+
 }
