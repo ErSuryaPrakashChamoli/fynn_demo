@@ -81,6 +81,10 @@ class Customer extends Model
             return $this->belongsTo(Employee::class, 'assign_to');
         }
 
+        public function followUps()
+        {
+            return $this->hasMany(FollowUp::class);
+        }
 
 
 }

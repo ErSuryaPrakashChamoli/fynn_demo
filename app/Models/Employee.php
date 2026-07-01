@@ -36,5 +36,10 @@ class Employee extends Model
     {
         return $this->hasOne(User::class);
     }
+
+    public function followUps()
+    {
+        return $this->hasMany(FollowUp::class);
+    }
     
 }
