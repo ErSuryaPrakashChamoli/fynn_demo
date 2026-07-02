@@ -33,6 +33,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
+            ->brandLogo(asset('images/fynnedge.jpeg'))
+            // ->registration()
             ->brandName('Finn On')
             ->colors([
                 'primary' => Color::Amber,
