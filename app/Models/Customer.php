@@ -44,7 +44,8 @@ class Customer extends Model
             'approved_remarks',
             'sanctioned_remarks',
             'not_approved_remarks',
-            'assign_to'
+            'assign_to',
+            'employee_id',
         ];
 
 

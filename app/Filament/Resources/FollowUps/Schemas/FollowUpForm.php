@@ -10,12 +10,15 @@ use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Hidden;
 
 class FollowUpForm
 {
     public static function configure(Schema $schema): Schema
     {
         $customer = Customer::find(request('customer'));
+
+    
 
         // Changed ->components() to ->schema() at the root level
         return $schema
@@ -54,6 +57,7 @@ class FollowUpForm
                             ->disabled()
                             ->dehydrated(false),
 
+                        
                         TextInput::make('salary')
                             ->label('Salary')
                             ->default(
@@ -63,6 +67,9 @@ class FollowUpForm
                             )
                             ->disabled()
                             ->dehydrated(false),
+
+                
+                     
 
                     ])
                     ->columns(2),
@@ -100,6 +107,11 @@ class FollowUpForm
                             ->rows(5)
                             ->required()
                             ->columnSpanFull(), // Makes the textarea span across both columns cleanly
+
+                        Hidden::make('customer_id')
+                        ->default(fn () => request()->query('customer'))
+                        ->dehydrated(true)
+                        ->required()
 
                     ])
                     ->columns(2),

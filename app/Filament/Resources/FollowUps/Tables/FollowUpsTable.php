@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
+use Filament\Tables\Columns\TextColumn;
 
 use App\Filament\Resources\FollowUps\FollowUpResource;
 
@@ -17,15 +18,41 @@ class FollowUpsTable
     {
         return $table
             ->columns([
+
+
+             TextColumn::make('customer.customer_name')
+                    ->label('Customer')
+                    ->searchable(),
+
+                TextColumn::make('customer.mobile_no')
+                    ->label('Mobile'),
+
+                TextColumn::make('follow_up_date')
+                    ->date(),
+
+                TextColumn::make('follow_up_type')
+                    ->badge(),
+
+                TextColumn::make('status')
+                    ->badge(),
+
+                TextColumn::make('next_follow_up_date')
+                    ->date(),
+
+                TextColumn::make('employee.emp_name')
+                    ->label('Followed By'),
+
+                TextColumn::make('created_at')
+                    ->dateTime()
                 //
 
-                Action::make('follow_up')
-                ->label('Follow Up')
-                ->icon('heroicon-o-phone')
-                ->color('primary')
-                ->url(fn ($record) => FollowUpResource::getUrl('create', [
-                'customer' => $record->id,
-                ]))
+                // Action::make('follow_up')
+                // ->label('Follow Up')
+                // ->icon('heroicon-o-phone')
+                // ->color('primary')
+                // ->url(fn ($record) => FollowUpResource::getUrl('create', [
+                // 'customer' => $record->id,
+                // ]))
 
             ])
             ->filters([
