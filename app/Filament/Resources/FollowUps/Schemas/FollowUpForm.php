@@ -2,104 +2,108 @@
 
 namespace App\Filament\Resources\FollowUps\Schemas;
 
-use Filament\Schemas\Schema;
-
-
+use App\Models\Customer;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+// use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Tables;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Toggle;
-use Illuminate\Support\Facades\Hash;
-use Filament\Schemas\Components\Section;
-
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Schema;
 
 class FollowUpForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $customer = Customer::find(request('customer'));
+
+        // Changed ->components() to ->schema() at the root level
         return $schema
-            ->components([
-                //
+            ->schema([
 
                 Section::make('Customer Details')
                     ->schema([
 
-                                TextInput::make('customer_name')
-                                    ->label('Customer Name')
-                                    ->content(fn ($record) => $record?->customer?->customer_name),
+                        TextInput::make('customer_name')
+                            ->label('Customer Name')
+                            ->default($customer?->customer_name)
+                            ->disabled()
+                            ->dehydrated(false),
 
-                                TextInput::make('mobile_no')
-                                    ->label('Phone')
-                                    ->content(fn ($record) => $record?->customer?->mobile_no),
+                        TextInput::make('mobile_no')
+                            ->label('Phone')
+                            ->default($customer?->mobile_no)
+                            ->disabled()
+                            ->dehydrated(false),
 
-                                TextInput::make('pan_number')
-                                    ->label('PAN')
-                                    ->content(fn ($record) => $record?->customer?->pan_number),
+                        TextInput::make('pan_number')
+                            ->label('PAN Number')
+                            ->default($customer?->pan_number)
+                            ->disabled()
+                            ->dehydrated(false),
 
-                                TextInput::make('current_location')
-                                    ->label('Current Location')
-                                    ->content(fn ($record) => $record?->customer?->current_location),
+                        TextInput::make('current_location')
+                            ->label('Current Location')
+                            ->default($customer?->current_location)
+                            ->disabled()
+                            ->dehydrated(false),
 
-                                TextInput::make('job_location')
-                                    ->label('Job Location')
-                                    ->content(fn ($record) => $record?->customer?->job_location),
+                        TextInput::make('job_location')
+                            ->label('Job Location')
+                            ->default($customer?->job_location)
+                            ->disabled()
+                            ->dehydrated(false),
 
-                                TextInput::make('salary')
-                                    ->label('Salary')
-                                    ->content(fn ($record) => "₹".number_format($record?->customer?->salary)),
-                          ]),
+                        TextInput::make('salary')
+                            ->label('Salary')
+                            ->default(
+                                $customer?->salary
+                                    ? '₹' . number_format($customer->salary)
+                                    : ''
+                            )
+                            ->disabled()
+                            ->dehydrated(false),
 
-                          Section::make('Follow Up')
+                    ])
+                    ->columns(2),
 
-                                ->schema([
+                Section::make('Follow Up')
+                    ->schema([
 
-                                    DatePicker::make('follow_up_date')
-                                        ->required()
-                                        ->default(now()),
+                        DatePicker::make('follow_up_date')
+                            ->required()
+                            ->default(now()),
 
-                                    Select::make('follow_up_type')
-                                        ->options([
-                                            'Call'=>'Call',
-                                            'WhatsApp'=>'WhatsApp',
-                                            'Email'=>'Email',
-                                            'Visit'=>'Visit',
-                                        ])
-                                        ->required(),
+                        Select::make('follow_up_type')
+                            ->options([
+                                'Call' => 'Call',
+                                'WhatsApp' => 'WhatsApp',
+                                'Email' => 'Email',
+                                'Visit' => 'Visit',
+                            ])
+                            ->required(),
 
-                                    Select::make('status')
-                                        ->options([
-                                            'Pending'=>'Pending',
-                                            'Interested'=>'Interested',
-                                            'Not Interested'=>'Not Interested',
-                                            'Busy'=>'Busy',
-                                            'No Response'=>'No Response',
-                                        ])
-                                        ->required(),
+                        Select::make('status')
+                            ->options([
+                                'Pending' => 'Pending',
+                                'Interested' => 'Interested',
+                                'Not Interested' => 'Not Interested',
+                                'Busy' => 'Busy',
+                                'No Response' => 'No Response',
+                            ])
+                            ->default('Pending')
+                            ->required(),
 
-                                    DatePicker::make('next_follow_up_date'),
+                        DatePicker::make('next_follow_up_date'),
 
-                                    Textarea::make('remarks')
-                                        ->rows(5)
-                                        ->required(),
+                        Textarea::make('remarks')
+                            ->rows(5)
+                            ->required()
+                            ->columnSpanFull(), // Makes the textarea span across both columns cleanly
 
-                                ])
+                    ])
+                    ->columns(2),
 
-                          
-                    ->columns(2)
-
-
-                    
-
-
-                ]);
+            ]);
     }
 }

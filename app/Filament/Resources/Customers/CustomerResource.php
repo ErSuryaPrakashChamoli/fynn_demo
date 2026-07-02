@@ -31,6 +31,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables;
 
+use App\Filament\Resources\FollowUps\FollowUpResource;
+use Filament\Actions\Action;
+
 use Filament\Forms\Components\FileUpload;
 
 
@@ -152,6 +155,13 @@ class CustomerResource extends Resource
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
+                Action::make('followup')
+                    ->label('Follow Up')
+                    ->icon('heroicon-o-phone')
+                    ->color('warning')
+                    ->url(fn ($record) => FollowUpResource::getUrl('create', [
+                        'customer' => $record->id,
+                    ])),
             ])
             ->headerActions([
                 ImportAction::make()

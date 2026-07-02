@@ -9,10 +9,11 @@ class CreateFollowUp extends CreateRecord
 {
     protected static string $resource = FollowUpResource::class;
 
-    protected function mutateFormDataBeforeCreate(array $data): array
-        {
-        $data['employee_id'] = auth()->user()->employee_id;
+        protected function mutateFormDataBeforeCreate(array $data): array
+            {
+                $data['employee_id'] = auth()->user()->employee_id;
+                $data['customer_id'] = request()->integer('customer');
 
-        return $data;
-        }
+                return $data;
+            }
 }
