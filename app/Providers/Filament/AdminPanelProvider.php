@@ -48,9 +48,10 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 // AccountWidget::class,
                 // FilamentInfoWidget::class,
+                AchievementChart::class,
                 TargetStats::class,
                 DailyCommitmentStats::class,
-                AchievementChart::class,
+               
                
             ])
             ->middleware([
