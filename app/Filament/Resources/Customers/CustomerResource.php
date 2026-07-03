@@ -51,6 +51,9 @@ use App\Filament\Imports\CustomerImporter;
 use Illuminate\Database\Eloquent\Builder;
 
 
+use Illuminate\Support\Facades\Auth;
+
+
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
@@ -196,11 +199,69 @@ class CustomerResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        if (auth()->user()->hasRole('Admin')) {
-            return $query;
+
+        // if (auth()->user()->hasRole('Admin')) {
+        //     return $query;
+        // }
+
+        // return $query->where('employee_id', auth()->user()->employee_id);
+
+
+        $currentUser = Auth::user()->employee;
+
+
+        if (!$currentUser) {
+                return $query;
         }
 
-        return $query->where('employee_id', auth()->user()->employee_id);
+        
+
+        if ($currentUser->designation == 1) {
+            return $query->where('assigned_to', $currentUser->id);
+        }
+
+        if ($currentUser->designation == 2) {
+                return $query->where(function (Builder $subQuery) use ($currentUser) {
+                    $subQuery->where('assign_to', $currentUser->id) // खुद के कस्टमर
+                        ->orWhereIn('assign_to', function ($employeesQuery) use ($currentUser) {
+                            $employeesQuery->select('id')
+                                ->from('employees')
+                                ->where('superviser_id', $currentUser->id);
+                        });
+                });
+            }
+
+            if ($currentUser->designation == 3) {
+        
+                return $query->where(function (Builder $subQuery) use ($currentUser) {
+                    $subQuery->where('assign_to', $currentUser->id) // खुद के कस्टमर
+                        ->orWhereIn('assign_to', function ($employeesQuery) use ($currentUser) {
+                            
+                            $employeesQuery->select('id')
+                                ->from('employees')
+                                ->where('manager_id', $currentUser->id);
+                        });
+                });
+
+               
+            }
+
+            if ($currentUser->designation == 4) {
+                return $query->where(function (Builder $subQuery) use ($currentUser) {
+                    $subQuery->where('assign_to', $currentUser->id)
+                        ->orWhereIn('assign_to', function ($employeesQuery) use ($currentUser) {
+                            $employeesQuery->select('id')
+                                ->from('employees')
+                                ->where('cluster_id', $currentUser->id);
+                        });
+                });
+            }
+
+            return $query;
+
+
+
+
     }
 
     

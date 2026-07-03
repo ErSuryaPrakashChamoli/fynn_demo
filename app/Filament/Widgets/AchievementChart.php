@@ -7,6 +7,8 @@ use App\Models\Customer;
 
 class AchievementChart extends ChartWidget
 {
+
+    protected static ?int $sort = 3;
     // protected ?string $heading = 'Achievement Chart';
      protected ?string $heading = 'Monthly Loan Achievement';
 

@@ -18,8 +18,11 @@ class Employee extends Model
         'reporting_date',
         'superviser_id',
         'manager_id',
+        'cluster_id',
         'cost_center',
         'unit_name',
+        'category',
+        'position',
     ];
 
     public function superviser()
@@ -41,5 +44,11 @@ class Employee extends Model
     {
         return $this->hasMany(FollowUp::class);
     }
+
+    public function clusterManager()
+{
+    // 'cluster_id' आपके टेबल का फॉरेन की कॉलम है, जो किसी दूसरे Employee की 'id' को पॉइंट करेगा
+    return $this->belongsTo(Employee::class, 'cluster_id');
+}
     
 }

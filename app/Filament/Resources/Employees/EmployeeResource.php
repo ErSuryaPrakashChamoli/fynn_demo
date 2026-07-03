@@ -44,6 +44,10 @@ use App\Filament\Imports\CustomerImporter;
 use App\Filament\Imports\EmployeeImporter;
 
 
+
+use Filament\Schemas\Components\Utilities\Set;
+
+
 class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
@@ -72,25 +76,81 @@ class EmployeeResource extends Resource
                         ->required()
                         ->unique(ignoreRecord: true),
 
-                    TextInput::make('designation')
-                        ->required(),
+                    TextInput::make('position')
+                       ->label('Designation')
+                        ->required(),    
 
-                    DatePicker::make('doj')
-                        ->label('Date Of Joining'),
+                    // TextInput::make('designation')
+                    //     ->required(),
 
-                    DatePicker::make('reporting_date'),
+                        Select::make('designation')
+                        ->label('Position')
+                        ->options([
+                            '1' => 'Caller',
+                            '2' => 'Team Leader',
+                            '3' => 'Manager',
+                            '4' => 'Cluster Manager',
+                        ])
+                        ->required()
+                        ->searchable()
+                        ->live()
+                        ->afterStateUpdated(function (Set $set, $state) {
+                            if ($state !== '1') {
+                                $set('superviser_id', null);
+                            }
+                            // अगर यूज़र Manager या Cluster Manager चुनता है, तो मैनेजर को भी खाली कर दो
+                            if (in_array($state, ['3', '4'])) {
+                                $set('manager_id', null);
+                            }
+                        })
+                        ->native(false),
+
+                
+
+                    Select::make('category')
+                    ->label('Target Category')
+                    ->options([
+                        '2500000' => 'Silver',
+                        '3000000' => 'Gold',
+                        '3500000' => 'Platinum',
+                    ])
+                    ->required() 
+                    ->native(false),
+
+                   
 
                     Select::make('superviser_id')
                         ->label('Superviser')
                         ->relationship('superviser', 'emp_name')
                         ->searchable()
+                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->emp_name} - ({$record->emp_id})")
+                        ->visible(fn (Get $get) => in_array($get('designation'), ['1']))
+                        ->required(fn (Get $get) => $get('designation') === '1')
                         ->preload(),
 
                     Select::make('manager_id')
                         ->label('Manager')
                         ->relationship('manager', 'emp_name')
                         ->searchable()
+                         ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->emp_name} - ({$record->emp_id})")
+                         ->visible(fn (Get $get) => in_array($get('designation'), ['1', '2']))
+                         ->required(fn (Get $get) => in_array($get('designation'), ['3', '4']))
                         ->preload(),
+
+                    Select::make('cluster_id')
+                    ->label('Cluster Manager')
+                    ->relationship('clusterManager', 'emp_name')
+                    ->searchable()
+                        ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->emp_name} - ({$record->emp_id})")
+                        ->visible(fn (Get $get) => in_array($get('designation'), ['1', '2' , '3']))
+                        ->required(fn (Get $get) => in_array($get('designation'), ['3', '4']))
+                    ->preload(),
+
+
+                    DatePicker::make('doj')
+                        ->label('Date Of Joining'),
+
+                    DatePicker::make('reporting_date'),
 
                     TextInput::make('cost_center'),
 

@@ -34,7 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->brandLogo(asset('images/fynnedge.jpeg'))
-            // ->registration()
+            ->registration()
             ->brandName('Finn On')
             ->colors([
                 'primary' => Color::Amber,
@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 // AccountWidget::class,
                 // FilamentInfoWidget::class,
-                AchievementChart::class,
+                // AchievementChart::class,
                 TargetStats::class,
                 DailyCommitmentStats::class,
                

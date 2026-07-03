@@ -224,10 +224,11 @@ class CustomerForm
                             //   ->required()
                             // ->maxLength(255),
 
-                            Select::make('assign_to')
+                    Select::make('assign_to')
                             ->label('Assign To')
                             ->relationship('assignedTo', 'emp_name')
                             ->searchable()
+                            ->default(fn () => auth()->user()->employee?->id)
                             ->preload()
                             ->nullable(),
 

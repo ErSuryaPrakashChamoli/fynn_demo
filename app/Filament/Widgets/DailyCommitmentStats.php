@@ -9,6 +9,8 @@ use App\Models\Customer;
 class DailyCommitmentStats extends StatsOverviewWidget
 {
 
+protected static ?int $sort = 2;
+
 
     protected function getStats(): array
     {

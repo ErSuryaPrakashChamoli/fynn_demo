@@ -12,6 +12,8 @@ use App\Models\User;
 
 class TargetStats extends StatsOverviewWidget
 {
+
+    protected static ?int $sort = 1;
     protected function getStats(): array
     {
 

@@ -26,19 +26,23 @@ class EmployeeImporter extends Importer
             //     Rule::unique(Employee::class, 'emp_id'),
             // ]),
             ImportColumn::make('emp_id')
-    ->requiredMapping()
-    ->rules([
-        'required',
-        'max:255',
-        Rule::unique('employees', 'emp_id'),
-    ]),
+            ->requiredMapping()
+            ->rules([
+                'required',
+                'max:255',
+                Rule::unique('employees', 'emp_id'),
+            ]),
 
             ImportColumn::make('emp_name')
                 ->requiredMapping()
                 ->rules(['required', 'max:255']),
             ImportColumn::make('email')
                 ->requiredMapping()
-                ->rules(['required', 'email', 'max:255']),
+                  ->rules([
+                'required',
+                'max:255',
+                Rule::unique('employees', 'email'),
+            ]),
             ImportColumn::make('designation')
                 ->requiredMapping()
                 ->rules(['required', 'max:255']),
@@ -46,12 +50,19 @@ class EmployeeImporter extends Importer
                 ->rules(['date']),
             ImportColumn::make('reporting_date')
                 ->rules(['date']),
+            // ImportColumn::make('superviser_id')
+            //     ->numeric()
+            //     ->rules(['integer']),
             ImportColumn::make('superviser_id')
-                ->numeric()
-                ->rules(['integer']),
+            ->rules(['nullable', 'string', 'max:255']),
             ImportColumn::make('manager_id')
-                ->numeric()
-                ->rules(['integer']),
+            ->rules(['nullable', 'string', 'max:255']),
+
+            
+
+            // ImportColumn::make('manager_id')
+            //     ->numeric()
+            //     ->rules(['integer']),
             ImportColumn::make('cost_center')
                 ->rules(['max:255']),
             ImportColumn::make('unit_name')
@@ -64,10 +75,10 @@ class EmployeeImporter extends Importer
         // return Employee::firstOrNew([
         //     'emp_name' => $this->data['emp_name'],
         // ]);
-            return new Employee();
-            // return Employee::firstOrNew([
-            // 'emp_id' => $this->data['emp_id'],
-            // ]);
+            // return new Employee();
+            return Employee::firstOrNew([
+            'emp_id' => $this->data['emp_id'],
+            ]);
     }
 
     public static function getCompletedNotificationBody(Import $import): string
@@ -79,6 +90,12 @@ class EmployeeImporter extends Importer
         }
 
         return $body;
+    }
+
+    protected function beforeValidation(): void
+    {
+        // This logs the raw CSV row data right before Filament validates it
+        logger('Importing Row Data:', $this->data);
     }
 
     
