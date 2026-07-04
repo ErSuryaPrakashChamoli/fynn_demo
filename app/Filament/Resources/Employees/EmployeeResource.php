@@ -186,6 +186,9 @@ class EmployeeResource extends Resource
 
                     Tables\Columns\TextColumn::make('email'),
 
+                    Tables\Columns\TextColumn::make('category')
+                        ->label('Target Category'),
+
                     Tables\Columns\TextColumn::make('superviser.emp_name')
                         ->label('Superviser'),
 

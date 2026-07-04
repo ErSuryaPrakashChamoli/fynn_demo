@@ -17,9 +17,21 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+
+
+        //create roles with this seeder
+        //   $this->call([
+        //         RolesSeeder::class,
+        //     ]);
+
+        $this->call([
+            CitySeeder::class,
         ]);
+
+        //php artisan db:seed --class=CitySeeder
     }
 }

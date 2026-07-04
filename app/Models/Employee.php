@@ -46,9 +46,22 @@ class Employee extends Model
     }
 
     public function clusterManager()
-{
-    // 'cluster_id' आपके टेबल का फॉरेन की कॉलम है, जो किसी दूसरे Employee की 'id' को पॉइंट करेगा
-    return $this->belongsTo(Employee::class, 'cluster_id');
-}
+    {
+        // 'cluster_id' आपके टेबल का फॉरेन की कॉलम है, जो किसी दूसरे Employee की 'id' को पॉइंट करेगा
+        return $this->belongsTo(Employee::class, 'cluster_id');
+    }
+
+    public function getTargetAmountAttribute(): int
+    {
+        $categoryTargets = [
+            'platinum' => 3500000,
+            'gold'     => 3000000,
+            'silver'   => 2500000,
+        ];
+
+        $category = strtolower($this->category ?? 'silver');
+
+        return $categoryTargets[$category] ?? 2500000;
+    }
     
 }
