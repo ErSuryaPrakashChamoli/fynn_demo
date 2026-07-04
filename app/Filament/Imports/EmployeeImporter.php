@@ -76,8 +76,26 @@ class EmployeeImporter extends Importer
         //     'emp_name' => $this->data['emp_name'],
         // ]);
             // return new Employee();
+            // return Employee::firstOrNew([
+            // 'emp_id' => $this->data['emp_id'],
+            // ]);
+
+            if (! empty($this->data['superviser_id'])) {
+                $this->data['superviser_id'] = Employee::where(
+                    'emp_id',
+                    $this->data['superviser_id']
+                )->value('id');
+            }
+
+            if (! empty($this->data['manager_id'])) {
+                $this->data['manager_id'] = Employee::where(
+                    'emp_id',
+                    $this->data['manager_id']
+                )->value('id');
+            }
+
             return Employee::firstOrNew([
-            'emp_id' => $this->data['emp_id'],
+                'emp_id' => $this->data['emp_id'],
             ]);
     }
 

@@ -19,7 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-use App\Filament\Widgets\AchievementChart;
+// use App\Filament\Widgets\AchievementChart;
 use App\Filament\Widgets\DailyCommitmentStats;
 use App\Filament\Widgets\TargetStats;
 
