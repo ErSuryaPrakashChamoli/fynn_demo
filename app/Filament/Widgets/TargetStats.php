@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Employee;
 use Illuminate\Support\Carbon;
+use NumberFormatter;
 
 
 
@@ -37,19 +38,11 @@ class TargetStats extends StatsOverviewWidget
     }
 
     $pending = max(0, $target - $achievement);
-        $remainingDays = max(1, Carbon::now()->daysInMonth - Carbon::now()->day);
-        $drr = $pending / $remainingDays;
-    // $target = Employee::where('id', $login_user_id->employee_id)->first()?->category ?? 2500000;
+    $remainingDays = max(1, Carbon::now()->daysInMonth - Carbon::now()->day);
+    $drr = $pending / $remainingDays;
 
-
-    // dd($login_user_id);
-    // $employee = auth()->user()?->employee;
-
-
-    // $employee = \App\Models\Employee::where('emp_id', auth()->user()->employee_id)->first();
-    
-    // dd($employee);
-    // $target = $employee?->category ?? 2500000;
+    $indianCurrencyFormatter = new NumberFormatter('en_IN', NumberFormatter::CURRENCY); 
+    $indianCurrencyFormatter->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 0);
 
     $target = $target ?? 2500000;
 
@@ -81,69 +74,24 @@ class TargetStats extends StatsOverviewWidget
 
     $drr = $pending / $remainingDays;
 
-
-       return [
-            Stat::make('🎯 Target', '₹ ' . number_format($target))
+    return [
+            Stat::make('🎯 Target', $indianCurrencyFormatter->formatCurrency($target, 'INR'))
                 ->description($targetLevel)
                 ->color($targetColor),
 
-            Stat::make('💰 Achievement', '₹ ' . number_format($achievement))
+            Stat::make('💰 Achievement', $indianCurrencyFormatter->formatCurrency($achievement, 'INR'))
                 ->description('Current Month')
                 ->color('success'),
 
-            Stat::make('⏳ Pending Target', '₹ ' . number_format($pending))
+            Stat::make('⏳ Pending Target', $indianCurrencyFormatter->formatCurrency($pending, 'INR'))
                 ->description('Remaining Target')
                 ->color($pending > 0 ? 'warning' : 'success'),
 
-            Stat::make('📈 DRR', '₹ ' . number_format($drr))
-                ->description('Daily Required  Rate')
+            Stat::make('📈 DRR', $indianCurrencyFormatter->formatCurrency($drr, 'INR'))
+                ->description('Daily Required Run Rate')
                 ->color($drr > 0 ? 'danger' : 'success'),
         ];
 
 
- 
-    // $target = $target;
-    $badge = '🥈 Silver';
-    $badgeDescription = 'Target: ₹25 Lakh';
-    $badgeColor = 'gray';
-
-
-    // if ($achievement >= 3500000) {
-    //     $target = 3500000;
-    //     $targetLevel = '💎 Platinum Target (₹35 Lakh)';
-    //     $targetColor = 'success';
-    // } elseif ($achievement >= 3000000) {
-    //     $target = 3000000;
-    //     $targetLevel = '🥇 Gold Target (₹30 Lakh)';
-    //     $targetColor = 'warning';
-    // } else {
-    //     $target = 2500000;
-    //     $targetLevel = '🥈 Silver Target (₹25 Lakh)';
-    //     $targetColor = 'info';
-    // }
-
-
- 
-    //   return [
-
-    // Stat::make('🎯 Target', '₹ ' . number_format($target))
-    // ->description($targetLevel)
-    // ->color($targetColor),
-
-    //     Stat::make('💰 Achievement', '₹ ' . number_format($achievement))
-    //         ->description('Current Month')
-    //         ->color('success'),
-
-    //     Stat::make('⏳ Pending Target', '₹ ' . number_format($pending))
-    //         ->description('Remaining Target')
-    //         ->color('warning'),
-
-    //     Stat::make('📈 DRR', '₹ ' . number_format($drr))
-    //         ->description('Daily Required Run Rate')
-    //         ->color('danger'),
-
-     
-    // ];
-       
     }
 }
