@@ -112,7 +112,10 @@ class EmployeeResource extends Resource
                     ->options([
                         '2500000' => 'Silver',
                         '3000000' => 'Gold',
-                        '3500000' => 'Platinum',
+                        '3500000' => 'Diamond',
+                        'team_leader' => 'Alpha',
+                        'manager' => 'Beta',
+                        'cluster_manager' => 'Delta',
                     ])
                     ->required() 
                     ->native(false),
@@ -148,13 +151,57 @@ class EmployeeResource extends Resource
 
 
                     DatePicker::make('doj')
+                        ->displayFormat('d F Y')
+                        ->maxDate(now())
+                        ->native(false)
+                        ->suffixIcon('heroicon-m-calendar')
                         ->label('Date Of Joining'),
 
-                    DatePicker::make('reporting_date'),
+                    DatePicker::make('reporting_date')
+                    ->displayFormat('d F Y')
+                    ->native(false)
+                    ->suffixIcon('heroicon-m-calendar')
+                    ->maxDate(now()),
 
                     TextInput::make('cost_center'),
 
-                    TextInput::make('unit_name'),
+                    // TextInput::make('unit_name'),
+
+                    Select::make('unit_name')
+                    ->label('Unit')
+                    ->options([
+                        'kanak_kumar' => 'Kanak Kumar',
+                        'rohit_sharma' => 'Rohit Sharma',
+                    
+                    ])
+                    ->required() 
+                    ->native(false),
+
+                    Select::make('exit_status')
+                        ->label('Active Status')
+                        ->options([
+                            'no' => 'Inactive',
+                            'yes' => 'Active',
+                        ])
+                        ->default('yes')
+                        ->required()
+                        ->native(false)
+                        ->live()
+                        ->afterStateUpdated(function (Set $set, $state) {
+                           
+                            if ($state === 'yes') {
+                                $set('exit_date', null);
+                            }
+                        }),
+
+                        DatePicker::make('exit_date')
+                        ->label('Exit Date')
+                        ->native(false)
+                        ->displayFormat('d F Y')
+                        ->suffixIcon('heroicon-m-calendar')
+                        ->maxDate(now())
+                        ->visible(fn (Get $get) => $get('exit_status') === 'no') 
+                        ->required(fn (Get $get) => $get('exit_status') === 'no'), 
 
                 ])
                 ->columns(2)

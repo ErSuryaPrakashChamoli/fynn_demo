@@ -28,9 +28,9 @@ class DatabaseSeeder extends Seeder
         //         RolesSeeder::class,
         //     ]);
 
-        $this->call([
-            CitySeeder::class,
-        ]);
+        // $this->call([
+        //     CitySeeder::class,
+        // ]);
 
         //php artisan db:seed --class=CitySeeder
     }

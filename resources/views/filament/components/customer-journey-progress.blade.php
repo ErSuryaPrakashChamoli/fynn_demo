@@ -7,7 +7,7 @@
         ['key' => 'sfl', 'label' => 'SFL', 'number' => 1],
         ['key' => 'underwriting', 'label' => 'Underwriting', 'number' => 2],
         ['key' => 'approved', 'label' => 'Approved', 'number' => 3],
-        ['key' => 'sanctioned', 'label' => 'Sanctioned', 'number' => 4],
+        ['key' => 'sanctioned', 'label' => 'Disbursed', 'number' => 4],
     ];
 
     $currentStep = match ($status) {

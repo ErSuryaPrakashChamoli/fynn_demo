@@ -367,7 +367,7 @@ class CustomerForm
                                 'underwriting' => 'Underwriting',
                                 'approved' => 'Approved',
                                 'not_approved' => 'Not Approved',
-                                'sanctioned' => 'Sanctioned',
+                                'sanctioned' => 'Disbursed',
                             ])
                             ->live(),
 
@@ -394,13 +394,14 @@ class CustomerForm
                     ->columnSpan(1)
                     ->visible(fn (): bool => auth()->check() && auth()->user()?->hasAnyRole(['Admin', 'Manager'])),
 
-                Section::make('Sanctioned Details')
+                Section::make('Application Details')
                     ->schema([
 
                         // TextInput::make('channel')
                         //     ->label('Channel')
                         //     ->maxLength(255)
                         //     ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
+                        
 
                         Select::make('channel')
                         ->label('Channel')
@@ -424,9 +425,10 @@ class CustomerForm
                             ->label('LAN No')
                             ->maxLength(255),
 
-                        TextInput::make('sanctioned_bank')
+                        Select::make('sanctioned_bank')
                             ->label('Bank Name')
-                            ->maxLength(255),
+                             ->options($banks)
+                            ,
 
                         // TextInput::make('sanctioned_loan_amount')
                         //     ->label('Disbursed Loan Amount')
@@ -458,6 +460,48 @@ class CustomerForm
 
                             if ($value !== '') {
                                 $set('sanctioned_loan_amount', indianCurrencyFormat($value));
+                            }
+                        })
+                   
+                        ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                        ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
+
+                TextInput::make('cashback')
+                         ->label('Cashback') 
+                        ->prefix('₹')
+                        ->live()
+
+                  
+                        ->formatStateUsing(fn ($state) => filled($state)
+                            ? indianCurrencyFormat($state)
+                            : null)
+
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $value = preg_replace('/[^0-9]/', '', (string) $state);
+
+                            if ($value !== '') {
+                                $set('cashback', indianCurrencyFormat($value));
+                            }
+                        })
+                   
+                        ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                        ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
+
+                     TextInput::make('subvention')
+                         ->label('Subvention') 
+                        ->prefix('₹')
+                        ->live()
+
+                  
+                        ->formatStateUsing(fn ($state) => filled($state)
+                            ? indianCurrencyFormat($state)
+                            : null)
+
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $value = preg_replace('/[^0-9]/', '', (string) $state);
+
+                            if ($value !== '') {
+                                $set('subvention', indianCurrencyFormat($value));
                             }
                         })
                    
@@ -501,6 +545,7 @@ class CustomerForm
                                 'complete' => 'Complete',
                                 'pending' => 'Pending',
                             ])
+                              ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sfl')
                             ->live(),
 
         

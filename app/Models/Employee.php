@@ -23,6 +23,8 @@ class Employee extends Model
         'unit_name',
         'category',
         'position',
+        'exit_status',
+        'exit_date',
     ];
 
     public function superviser()

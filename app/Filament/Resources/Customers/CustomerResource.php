@@ -52,6 +52,14 @@ use Illuminate\Database\Eloquent\Builder;
 
 
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Exports\CustomerExporter;
+
+
+
+use Filament\Actions\ExportAction;
+
+
+use Filament\Actions\ExportBulkAction;
 
 
 class CustomerResource extends Resource
@@ -167,6 +175,12 @@ class CustomerResource extends Resource
                     ])),
             ])
             ->headerActions([
+
+                ExportAction::make()
+                ->exporter(CustomerExporter::class)
+                ->label('Export Customers')
+                ->icon('heroicon-o-arrow-down-tray'),
+
                 ImportAction::make()
                 ->label('Import Customers')
                 ->icon('heroicon-o-arrow-up-tray')
@@ -175,6 +189,10 @@ class CustomerResource extends Resource
                 ])
             ->toolbarActions([
                DeleteBulkAction::make(),
+               ExportBulkAction::make()
+                    ->exporter(CustomerExporter::class)
+                    ->label('Export Selected'),
+                    
             ]);
     }
 
