@@ -235,7 +235,7 @@ class CustomerResource extends Resource
         
 
         if ($currentUser->designation == 1) {
-            return $query->where('assigned_to', $currentUser->id);
+            return $query->where('assign_to', $currentUser->id);
         }
 
         if ($currentUser->designation == 2) {
