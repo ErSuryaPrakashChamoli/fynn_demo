@@ -6,9 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
+// use Spatie\Activitylog\Traits\LogsActivity;
+// use Spatie\Activitylog\LogOptions;
+
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
+
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory , LogsActivity;
     //
         protected $fillable = [
             'customer_name',
@@ -86,6 +92,14 @@ class Customer extends Model
         public function followUps()
         {
             return $this->hasMany(FollowUp::class);
+        }
+
+        public function getActivitylogOptions(): LogOptions
+        {
+            return LogOptions::defaults()
+                ->logAll()              
+                ->logOnlyDirty()        
+                ->dontLogEmptyChanges();
         }
 
 
