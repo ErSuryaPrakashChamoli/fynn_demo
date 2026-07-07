@@ -176,14 +176,48 @@ class CustomerForm
                         //     ->dehydrateStateUsing(fn($state) => filled($state) ? str_replace(',', '', $state) : null)
                         //     ->formatStateUsing(fn($state) => filled($state) ? number_format((float) str_replace(',', '', $state), 0, '.', ',') : null),
 
+                        // TextInput::make('salary')
+                        //     ->label('Salary')
+                        //     ->prefix('₹')
+                        //     ->live(onBlur: true)
+                        //     ->afterStateUpdated(function ($state, callable $set) {
+                        //         $set('salary', indianCurrencyFormat($state));
+                        //     })
+                        //     ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', $state)),
+
+                        // TextInput::make('salary')
+                        //     ->label('Salary')
+                        //     ->prefix('₹')
+                        //     ->numeric() // Ensures native numeric typing behavior
+                        //     ->mask(fn (TextInput\Mask $mask) => $mask->numeric()->thousandsSeparator(',')->decimalSeparator('.'))
+                        //     ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^0-9]/', '', $state)),
+
+                        // TextInput::make('salary')
+                        //         ->label('Salary')
+                        //         ->prefix('₹')
+                        //         ->formatStateUsing(fn ($state) => $state ? indianCurrencyFormat($state) : null)
+                        //         ->stripCharacters([',', ' '])
+                        //         ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', $state)),
+
                         TextInput::make('salary')
-                            ->label('Salary')
-                            ->prefix('₹')
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                $set('salary', indianCurrencyFormat($state));
-                            })
-                            ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', $state)),
+                        ->label('Salary')
+                        ->prefix('₹')
+                        ->live()
+
+                  
+                        ->formatStateUsing(fn ($state) => filled($state)
+                            ? indianCurrencyFormat($state)
+                            : null)
+
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $value = preg_replace('/[^0-9]/', '', (string) $state);
+
+                            if ($value !== '') {
+                                $set('salary', indianCurrencyFormat($value));
+                            }
+                        })
+                   
+                        ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state)),
 
                         // TextInput::make('current_location')
                         //     ->label('Current Location')
@@ -399,12 +433,67 @@ class CustomerForm
                         //     ->numeric(),
 
 
-                    TextInput::make('sanctioned_loan_amount')
-                        ->label('Disbursed Loan Amount')
-                        ->numeric()
+                    // TextInput::make('sanctioned_loan_amount')
+                    //     ->label('Disbursed Loan Amount')
+                    //     ->numeric()
+                    //     ->prefix('₹')
+                    //     ->placeholder('5,00,000')
+                    //     ->inputMode('decimal')
+                    //     ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
+
+
+
+                        TextInput::make('sanctioned_loan_amount')
+                         ->label('Disbursed Loan Amount') 
                         ->prefix('₹')
-                        ->placeholder('5,00,000')
-                        ->inputMode('decimal'),
+                        ->live()
+
+                  
+                        ->formatStateUsing(fn ($state) => filled($state)
+                            ? indianCurrencyFormat($state)
+                            : null)
+
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $value = preg_replace('/[^0-9]/', '', (string) $state);
+
+                            if ($value !== '') {
+                                $set('sanctioned_loan_amount', indianCurrencyFormat($value));
+                            }
+                        })
+                   
+                        ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                        ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
+
+                    // TextInput::make('eligible_loan_amount')
+                    //     ->label('Eligible Loan Amount')
+                    //     ->numeric()
+                    //     ->prefix('₹')
+                    //     ->placeholder('5,00,000')
+                    //     ->inputMode('decimal')
+                
+                    //     ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sfl'),
+
+
+                           TextInput::make('eligible_loan_amount')
+                                ->label('Eligible Loan Amount')
+                                ->prefix('₹')
+                                ->live()
+
+
+                                ->formatStateUsing(fn ($state) => filled($state)
+                                ? indianCurrencyFormat($state)
+                                : null)
+
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                $value = preg_replace('/[^0-9]/', '', (string) $state);
+
+                                if ($value !== '') {
+                                    $set('eligible_loan_amount', indianCurrencyFormat($value));
+                                }
+                                })
+
+                                ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                                ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sfl'),
 
                         Select::make('documentation_status')
                             ->label('Documentation')
@@ -419,14 +508,14 @@ class CustomerForm
                         CheckboxList::make('pending_document')
                             ->label('Pending Documents')
                             ->options([
-                                'aadhaar_card'     => 'Aadhaar Card',
-                                'pan_card'         => 'PAN Card',
-                                'salary_slip'      => 'Salary Slip',
-                                'bank_statement'   => 'Bank Statement',
-                                'itr'              => 'ITR',
-                                'photo'            => 'Photo',
-                                'office_id_card'   => 'Office ID Card',
-                                'residence_proof'  => 'Residence Proof',
+                                'aadhaar_card'            => 'AADHAR Card',
+                                'current_address_proof'   => 'Current Address Proof',
+                                'electricity_bill'        => 'Electricity Bill',
+                                'bank_statement'          => 'Bank Statement',
+                                'form_26as'               => 'Form 26AS',
+                                'photo'                   => 'Photo',
+                                'payslip'                 => 'Payslip',
+                                'soa_repayment_schedule'  => 'SOA / Repayment Schedule',
                                 'other'            => 'Other',
                             ])
                             ->columns(2)
@@ -444,10 +533,31 @@ class CustomerForm
                             ])
                             ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting'),
 
+                        // TextInput::make('approved_loan_amount')
+                        //     ->label('Approved Loan Amount')
+                        //     ->numeric()
+                        //     ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved'),
+
                         TextInput::make('approved_loan_amount')
                             ->label('Approved Loan Amount')
-                            ->numeric()
-                            ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved'),
+                        ->prefix('₹')
+                        ->live()
+
+
+                        ->formatStateUsing(fn ($state) => filled($state)
+                        ? indianCurrencyFormat($state)
+                        : null)
+
+                        ->afterStateUpdated(function ($state, callable $set) {
+                        $value = preg_replace('/[^0-9]/', '', (string) $state);
+
+                        if ($value !== '') {
+                            $set('approved_loan_amount', indianCurrencyFormat($value));
+                        }
+                        })
+
+                        ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                        ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved'),
 
                         // Separated Remarks Fields based on Journey Status
                         Textarea::make('sfl_remarks')

@@ -46,6 +46,7 @@ class Customer extends Model
             'not_approved_remarks',
             'assign_to',
             'employee_id',
+            'eligible_loan_amount'
         ];
 
 
