@@ -62,21 +62,15 @@ class CustomerForm
                 View::make('filament.components.customer-journey-progress')
                     ->key('customerJourneyProgress')
                     ->columnSpanFull()
-                    ->visibleOn('edit') // Only shows on Edit page
-                    ->extraAttributes([
-                        // 'self-start' is the magic class that makes sticky work in CSS Grid
+                    ->visibleOn('edit') 
+                    ->extraAttributes([          
                         'class' => 'sticky z-50 self-start',
-                        // Force the top margin so it sits neatly under the Filament navbar
                         'style' => 'top: 5.5rem;', 
                     ]),
 
                 Section::make('Customer Basic Details')
                     ->schema([
-                        // TextInput::make('customer_name')
-                        //     ->label('Customer Name')
-                        //     ->required()
-                            
-                        //     ->maxLength(255),
+                       
                         TextInput::make('customer_name')
                         ->label('Customer Name')
                         ->required()
@@ -86,11 +80,7 @@ class CustomerForm
                             $set('customer_name', Str::title($state));
                         }),                            
 
-                        // TextInput::make('mobile_no')
-                        //     ->label('Mobile No')
-                        //     ->tel()
-                        //     ->required()
-                        //     ->maxLength(20),
+                     
 
                        
                         TextInput::make('mobile_no')
@@ -108,10 +98,6 @@ class CustomerForm
                             ->email()
                             ->maxLength(255),
 
-                        // TextInput::make('pan_number')
-                        //     ->label('PAN Number')
-                        //       ->required()
-                        //     ->maxLength(20),
 
                         TextInput::make('pan_number')
                             ->label('PAN Number')
@@ -127,10 +113,7 @@ class CustomerForm
                             ])
                             ->placeholder('ABCDE1234F'),
 
-                        // TextInput::make('job_location')
-                        //     ->label('Job Location')
-                        //       ->required()
-                        //     ->maxLength(255),
+                 
 
                     Select::make('job_location')
                     ->label('Job Location')
@@ -141,13 +124,9 @@ class CustomerForm
                         ->where('is_active', 1)
                         ->orderBy('city')
                         ->get()
-                        ->pluck('city', 'city') // Saves city name as the value
+                        ->pluck('city', 'city') 
                     ),
 
-                        // TextInput::make('residence_location')
-                        //     ->label('Residence Location')
-                        //       ->required()
-                        //     ->maxLength(255),
 
                     Select::make('residence_location')
                     ->label('Residence Location')
@@ -159,45 +138,9 @@ class CustomerForm
                         ->orderBy('city')
                         ->get()
                         ->mapWithKeys(fn ($item) => [
-                            $item->city => "{$item->city}, {$item->state}" // Displays "Mumbai, Maharashtra" but saves "Mumbai"
+                            $item->city => "{$item->city}, {$item->state}" 
                         ])
                     ),
-
-                        // TextInput::make('salary')
-                        //     ->label('Salary')
-                        //     ->prefix('₹')
-                        //     ->required()
-                        //     ->live(onBlur: true)
-                        //     ->afterStateHydrated(function ($component, $state) {
-                        //         if (filled($state)) {
-                        //             $component->state(number_format((float) $state, 0, '.', ','));
-                        //         }
-                        //     })
-                        //     ->dehydrateStateUsing(fn($state) => filled($state) ? str_replace(',', '', $state) : null)
-                        //     ->formatStateUsing(fn($state) => filled($state) ? number_format((float) str_replace(',', '', $state), 0, '.', ',') : null),
-
-                        // TextInput::make('salary')
-                        //     ->label('Salary')
-                        //     ->prefix('₹')
-                        //     ->live(onBlur: true)
-                        //     ->afterStateUpdated(function ($state, callable $set) {
-                        //         $set('salary', indianCurrencyFormat($state));
-                        //     })
-                        //     ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', $state)),
-
-                        // TextInput::make('salary')
-                        //     ->label('Salary')
-                        //     ->prefix('₹')
-                        //     ->numeric() // Ensures native numeric typing behavior
-                        //     ->mask(fn (TextInput\Mask $mask) => $mask->numeric()->thousandsSeparator(',')->decimalSeparator('.'))
-                        //     ->dehydrateStateUsing(fn ($state) => (int) preg_replace('/[^0-9]/', '', $state)),
-
-                        // TextInput::make('salary')
-                        //         ->label('Salary')
-                        //         ->prefix('₹')
-                        //         ->formatStateUsing(fn ($state) => $state ? indianCurrencyFormat($state) : null)
-                        //         ->stripCharacters([',', ' '])
-                        //         ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', $state)),
 
                         TextInput::make('salary')
                         ->label('Salary')
@@ -219,10 +162,7 @@ class CustomerForm
                    
                         ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state)),
 
-                        // TextInput::make('current_location')
-                        //     ->label('Current Location')
-                        //       ->required()
-                        //     ->maxLength(255),
+                      
 
                     Select::make('current_location')
                     ->label('Current Location')
@@ -234,7 +174,7 @@ class CustomerForm
                         ->orderBy('city')
                         ->get()
                         ->mapWithKeys(fn ($item) => [
-                            $item->city => "{$item->city}, {$item->state}" // Displays "Mumbai, Maharashtra" but saves "Mumbai"
+                            $item->city => "{$item->city}, {$item->state}" 
                         ])
                     ),
 
@@ -246,17 +186,11 @@ class CustomerForm
                                 'not_eligible' => 'Not Eligible',
                             ])
                             ->live()
-                            // ->disabled(fn (): bool => ! auth()->check() || ! auth()->user()?->hasAnyRole(['Admin', 'Manager']))
                             ->disabled(
                                 fn (string $operation): bool =>
                                     $operation === 'edit' &&
                                     (! auth()->check() || ! auth()->user()->hasAnyRole(['Admin', 'Manager']))
                             ),
-
-                            // TextInput::make('assign_to')
-                            // ->label('Assign to')
-                            //   ->required()
-                            // ->maxLength(255),
 
                     Select::make('assign_to')
                             ->label('Assign To')
@@ -289,9 +223,6 @@ class CustomerForm
                 Section::make('Journey')
                     ->schema([
 
-                        //  TextInput::make('company_category')
-                        //     ->label('Company Name')
-                        //     ->maxLength(255),
 
                         TextInput::make('company_category')
                         ->label('Company Name')
@@ -303,23 +234,7 @@ class CustomerForm
                         }),   
                             
 
-                        // Select::make('company_category')
-                        //     ->label('Company Name')
-                        //     ->options([
-                        //         'private_limited' => 'Private Limited',
-                        //         'public_limited' => 'Public Limited',
-                        //         'mnc' => 'MNC',
-                        //         'government' => 'Government',
-                        //         'semi_government' => 'Semi Government',
-                        //         'psu' => 'PSU',
-                        //         'proprietorship' => 'Proprietorship',
-                        //         'partnership' => 'Partnership',
-                        //         'llp' => 'LLP',
-                        //         'startup' => 'Startup',
-                        //         'self_employed' => 'Self Employed',
-                        //     ])
-                        //     ->searchable()
-                        //     ->preload(),
+                     
 
                         Select::make('loan_applied')
                             ->label('Loan Applied For')
@@ -383,7 +298,7 @@ class CustomerForm
                             ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'not_approved')
                             ->required(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'not_approved'),
 
-                        // Added Not Approved Remarks in the Journey section so it stays visible during rejection
+                    
                         Textarea::make('not_approved_remarks')
                             ->label('Rejection Remarks')
                             ->rows(3)
@@ -396,12 +311,6 @@ class CustomerForm
 
                 Section::make('Application Details')
                     ->schema([
-
-                        // TextInput::make('channel')
-                        //     ->label('Channel')
-                        //     ->maxLength(255)
-                        //     ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
-                        
 
                         Select::make('channel')
                         ->label('Channel')
@@ -427,23 +336,7 @@ class CustomerForm
 
                         Select::make('sanctioned_bank')
                             ->label('Bank Name')
-                             ->options($banks)
-                            ,
-
-                        // TextInput::make('sanctioned_loan_amount')
-                        //     ->label('Disbursed Loan Amount')
-                        //     ->numeric(),
-
-
-                    // TextInput::make('sanctioned_loan_amount')
-                    //     ->label('Disbursed Loan Amount')
-                    //     ->numeric()
-                    //     ->prefix('₹')
-                    //     ->placeholder('5,00,000')
-                    //     ->inputMode('decimal')
-                    //     ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
-
-
+                             ->options($banks) ,
 
                         TextInput::make('sanctioned_loan_amount')
                          ->label('Disbursed Loan Amount') 
@@ -466,26 +359,21 @@ class CustomerForm
                         ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
                         ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
 
-                TextInput::make('cashback')
-                         ->label('Cashback') 
-                        ->prefix('₹')
-                        ->live()
-
-                  
-                        ->formatStateUsing(fn ($state) => filled($state)
-                            ? indianCurrencyFormat($state)
-                            : null)
-
-                        ->afterStateUpdated(function ($state, callable $set) {
-                            $value = preg_replace('/[^0-9]/', '', (string) $state);
-
-                            if ($value !== '') {
-                                $set('cashback', indianCurrencyFormat($value));
-                            }
-                        })
-                   
-                        ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
-                        ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
+                    TextInput::make('cashback')
+                            ->label('Cashback') 
+                            ->prefix('₹')
+                            ->live()
+                            ->formatStateUsing(fn ($state) => filled($state)
+                                ? indianCurrencyFormat($state)
+                                : null)
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $value = preg_replace('/[^0-9]/', '', (string) $state);
+                                    if ($value !== ''){
+                                        $set('cashback', indianCurrencyFormat($value));
+                                    }
+                                })
+                            ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                            ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
 
                      TextInput::make('subvention')
                          ->label('Subvention') 
@@ -508,16 +396,23 @@ class CustomerForm
                         ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
                         ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
 
-                    // TextInput::make('eligible_loan_amount')
-                    //     ->label('Eligible Loan Amount')
-                    //     ->numeric()
-                    //     ->prefix('₹')
-                    //     ->placeholder('5,00,000')
-                    //     ->inputMode('decimal')
-                
-                    //     ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sfl'),
+                        TextInput::make('docking')
+                            ->label('Docking') 
+                            ->prefix('₹')
+                            ->live()
+                            ->formatStateUsing(fn ($state) => filled($state)
+                                ? indianCurrencyFormat($state)
+                                : null)
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $value = preg_replace('/[^0-9]/', '', (string) $state);
+                                    if ($value !== ''){
+                                        $set('docking', indianCurrencyFormat($value));
+                                    }
+                                })
+                            ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                            ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'sanctioned'),
 
-
+                    
                            TextInput::make('eligible_loan_amount')
                                 ->label('Eligible Loan Amount')
                                 ->prefix('₹')
@@ -577,11 +472,6 @@ class CustomerForm
                                 'hold' => 'Hold',
                             ])
                             ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting'),
-
-                        // TextInput::make('approved_loan_amount')
-                        //     ->label('Approved Loan Amount')
-                        //     ->numeric()
-                        //     ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved'),
 
                         TextInput::make('approved_loan_amount')
                             ->label('Approved Loan Amount')
