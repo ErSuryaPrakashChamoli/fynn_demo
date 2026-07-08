@@ -74,8 +74,7 @@ class UserResource extends Resource
         ];
     }
 
-    public static function shouldRegisterNavigation(): bool
-    {
-        return auth()->check() && auth()->user()->hasRole('Admin');
+    public static function shouldRegisterNavigation(): bool{
+        return auth()->check() && auth()->user()->hasRole(['Admin','IT']);
     }
 }

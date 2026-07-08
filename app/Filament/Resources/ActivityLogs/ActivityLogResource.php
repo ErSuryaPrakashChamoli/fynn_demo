@@ -47,4 +47,8 @@ class ActivityLogResource extends Resource
             'edit' => EditActivityLog::route('/{record}/edit'),
         ];
     }
+
+     public static function shouldRegisterNavigation(): bool{
+        return auth()->check() && auth()->user()->hasRole('Admin');
+    }
 }

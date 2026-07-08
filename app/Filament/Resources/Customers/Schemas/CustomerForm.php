@@ -108,8 +108,14 @@ class CustomerForm
                             ->afterStateUpdated(fn ($state, callable $set) => $set('pan_number', strtoupper($state)))
                             ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                             ->rule('regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/')
+                            ->unique(
+                                table: 'customers', 
+                                column: 'pan_no', 
+                                ignoreRecord: true // Crucial: Prevents validation from failing when editing an existing customer
+                            )
                             ->validationMessages([
                                 'regex' => 'Please enter a valid PAN number (e.g. ABCDE1234F).',
+                                'unique' => 'A customer with this PAN number already exists.',
                             ])
                             ->placeholder('ABCDE1234F'),
 
