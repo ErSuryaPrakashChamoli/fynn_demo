@@ -254,6 +254,8 @@ class EmployeeResource extends Resource
                         ->date('d M Y'),
 
                 ])
+                ->defaultPaginationPageOption(5)
+                ->paginated([5,10, 25, 50, 100, 'all'])
                 ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),

@@ -43,6 +43,8 @@ class UsersTable
                     ->date('d M Y')
                     ->sortable()
             ])
+            ->defaultPaginationPageOption(5)
+            ->paginated([5,10, 25, 50, 100, 'all'])
             ->filters([
                 //
             ])

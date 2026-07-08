@@ -166,6 +166,8 @@ class CustomerResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+           ->defaultPaginationPageOption(5)
+            ->paginated([5,10, 25, 50, 100, 'all'])
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
