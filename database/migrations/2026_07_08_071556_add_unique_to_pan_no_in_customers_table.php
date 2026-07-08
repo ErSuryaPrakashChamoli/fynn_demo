@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('customers', function (Blueprint $table) {
             //
-            $table->string('pan_no')->unique()->change();
+            $table->string('pan_number')->unique()->change();
         });
     }
 
@@ -24,7 +24,7 @@ return new class extends Migration
     {
         Schema::table('customers', function (Blueprint $table) {
             //
-            $table->dropUnique(['pan_no']);
+            $table->dropUnique(['pan_number']);
         });
     }
 };
