@@ -10,6 +10,7 @@ use App\Filament\Resources\Customers\Schemas\CustomerForm;
 use App\Filament\Resources\Customers\Schemas\CustomerInfolist;
 use App\Filament\Resources\Customers\Tables\CustomersTable;
 use App\Models\Customer;
+use App\Models\Employee;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -21,46 +22,20 @@ use Filament\Actions\EditAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\View;
 
-
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables;
-
 use App\Filament\Resources\FollowUps\FollowUpResource;
 use Filament\Actions\Action;
-
-use Filament\Forms\Components\FileUpload;
-
-
-use Filament\Schemas\Components\Text;
-use Illuminate\Support\HtmlString;
-
-use Filament\Facades\Filament;
-
-use Filament\Forms\Components\CheckboxList;
-
 use Filament\Actions\ImportAction;
 use App\Filament\Imports\CustomerImporter;
-
-
 use Illuminate\Database\Eloquent\Builder;
-
-
 use Illuminate\Support\Facades\Auth;
 use App\Filament\Exports\CustomerExporter;
-
-
-
 use Filament\Actions\ExportAction;
-
-
 use Filament\Actions\ExportBulkAction;
-
+use App\Support\HierarchyHelper;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Tables\Filters\SelectFilter;
 
 
 class CustomerResource extends Resource
@@ -69,15 +44,10 @@ class CustomerResource extends Resource
 
     // protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
-
     protected static ?string $recordTitleAttribute = 'customer_name';
-
-    
-
-  
     public static function form(Schema $schema): Schema
-      {
-         return CustomerForm::configure($schema);
+    {
+        return CustomerForm::configure($schema);
     }
 
     public static function infolist(Schema $schema): Schema
@@ -88,8 +58,8 @@ class CustomerResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-          ->defaultSort('id', 'desc')
-        
+            ->defaultSort('id', 'desc')
+
             ->columns([
                 Tables\Columns\TextColumn::make('application_no')
                     ->label('Application No')
@@ -129,7 +99,7 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('loan_applied')
                     ->label('Loan Applied')
                     ->searchable(),
-                    
+
                 Tables\Columns\TextColumn::make('salary')
                     ->label('Salary')
                     ->formatStateUsing(fn($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-')
@@ -166,40 +136,69 @@ class CustomerResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-           ->defaultPaginationPageOption(5)
-            ->paginated([5,10, 25, 50, 100, 'all'])
+            ->defaultPaginationPageOption(5)
+            ->paginated([5, 10, 25, 50, 100, 'all'])
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
-                DeleteAction::make(),
+                // EditAction::make(),
+                EditAction::make()
+                    ->visible(
+                        fn($record) =>
+                        ! $record->documents_submitted &&
+                            auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER
+                    ),
+                // DeleteAction::make()
+                //     ->visible(
+                //         fn($record) =>
+                //         ! $record->documents_submitted &&
+                //             auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER
+                //     ),
                 Action::make('followup')
                     ->label('Follow Up')
                     ->icon('heroicon-o-phone')
                     ->color('warning')
-                    ->url(fn ($record) => FollowUpResource::getUrl('create', [
+                    ->url(fn($record) => FollowUpResource::getUrl('create', [
                         'customer' => $record->id,
                     ])),
             ])
             ->headerActions([
 
                 ExportAction::make()
-                ->exporter(CustomerExporter::class)
-                ->label('Export Customers')
-                ->icon('heroicon-o-arrow-down-tray'),
+                    ->exporter(CustomerExporter::class)
+                    ->label('Export Customers')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->visible(fn() => auth()->user()->hasRole('Admin')),
 
                 ImportAction::make()
-                ->label('Import Customers')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('primary')
-                ->importer(CustomerImporter::class)
-                ])
+                    ->label('Import Customers')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('primary')
+                    ->importer(CustomerImporter::class)
+            ])
             ->toolbarActions([
-               DeleteBulkAction::make(),
-               ExportBulkAction::make()
+                DeleteBulkAction::make(),
+                ExportBulkAction::make()
                     ->exporter(CustomerExporter::class)
                     ->label('Export Selected'),
-                    
-            ]);
+
+            ])
+            ->filters([
+                    SelectFilter::make('journey_status')
+                        ->label('Journey Status')
+                        ->options([
+                            'sfl' => 'SFL',
+                            'underwriting' => 'Underwriting',
+                            'approved' => 'Approved',
+                            'sanctioned' => 'Sanctioned',
+                            'disbursal_documents' => 'Disbursal Documents',
+                            'completed' => 'Completed',
+                            'carry_forward' => 'Carry Forward',
+                            'dropped' => 'Dropped',
+                            'not_approved' => 'Not Approved',
+                        ])
+                        ->searchable()
+                        ->preload(),
+                ]);
     }
 
     public static function getRelations(): array
@@ -223,70 +222,34 @@ class CustomerResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
+        $employee = auth()->user()->employee;
 
-        // if (auth()->user()->hasRole('Admin')) {
-        //     return $query;
-        // }
-
-        // return $query->where('employee_id', auth()->user()->employee_id);
-
-
-        $currentUser = Auth::user()->employee;
-
-
-        if (!$currentUser) {
-                return $query;
-        }
-
-        
-
-        if ($currentUser->designation == 1) {
-            return $query->where('assign_to', $currentUser->id);
-        }
-
-        if ($currentUser->designation == 2) {
-                return $query->where(function (Builder $subQuery) use ($currentUser) {
-                    $subQuery->where('assign_to', $currentUser->id) // खुद के कस्टमर
-                        ->orWhereIn('assign_to', function ($employeesQuery) use ($currentUser) {
-                            $employeesQuery->select('id')
-                                ->from('employees')
-                                ->where('superviser_id', $currentUser->id);
-                        });
-                });
-            }
-
-            if ($currentUser->designation == 3) {
-        
-                return $query->where(function (Builder $subQuery) use ($currentUser) {
-                    $subQuery->where('assign_to', $currentUser->id) // खुद के कस्टमर
-                        ->orWhereIn('assign_to', function ($employeesQuery) use ($currentUser) {
-                            
-                            $employeesQuery->select('id')
-                                ->from('employees')
-                                ->where('manager_id', $currentUser->id);
-                        });
-                });
-
-               
-            }
-
-            if ($currentUser->designation == 4) {
-                return $query->where(function (Builder $subQuery) use ($currentUser) {
-                    $subQuery->where('assign_to', $currentUser->id)
-                        ->orWhereIn('assign_to', function ($employeesQuery) use ($currentUser) {
-                            $employeesQuery->select('id')
-                                ->from('employees')
-                                ->where('cluster_id', $currentUser->id);
-                        });
-                });
-            }
-
+        if (! $employee) {
             return $query;
+        }
 
+        if (auth()->user()->hasRole('Admin')) {
+            return $query;
+        }
 
-
-
+        return $query->whereIn(
+            'assign_to',
+            HierarchyHelper::callerIds($employee)
+        );
     }
 
-    
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER
+            && ! $record->documents_submitted;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER
+            && ! $record->documents_submitted;
+    }
+
+
+
 }

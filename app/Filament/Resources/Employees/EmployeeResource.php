@@ -87,10 +87,11 @@ class EmployeeResource extends Resource
                         Select::make('designation')
                         ->label('Position')
                         ->options([
-                            '1' => 'Caller',
-                            '2' => 'Team Leader',
-                            '3' => 'Manager',
-                            '4' => 'Cluster Manager',
+                            '1' => 'Admin',
+                            '7' => 'Caller',
+                            '3' => 'Team Leader',
+                            '2' => 'Manager',
+                            '5' => 'Cluster Manager',
                         ])
                         ->required()
                         ->searchable()
@@ -99,7 +100,6 @@ class EmployeeResource extends Resource
                             if ($state !== '1') {
                                 $set('superviser_id', null);
                             }
-                            // अगर यूज़र Manager या Cluster Manager चुनता है, तो मैनेजर को भी खाली कर दो
                             if (in_array($state, ['3', '4'])) {
                                 $set('manager_id', null);
                             }
@@ -128,8 +128,8 @@ class EmployeeResource extends Resource
                         ->relationship('superviser', 'emp_name')
                         ->searchable()
                         ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->emp_name} - ({$record->emp_id})")
-                        ->visible(fn (Get $get) => in_array($get('designation'), ['1']))
-                        ->required(fn (Get $get) => $get('designation') === '1')
+                        ->visible(fn (Get $get) => in_array($get('designation'), ['7']))
+                        ->required(fn (Get $get) => $get('designation') === '7')
                         ->preload(),
 
                     Select::make('manager_id')
@@ -137,8 +137,8 @@ class EmployeeResource extends Resource
                         ->relationship('manager', 'emp_name')
                         ->searchable()
                          ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->emp_name} - ({$record->emp_id})")
-                         ->visible(fn (Get $get) => in_array($get('designation'), ['1', '2']))
-                         ->required(fn (Get $get) => in_array($get('designation'), ['3', '4']))
+                         ->visible(fn (Get $get) => in_array($get('designation'), ['7', '3']))
+                         ->required(fn (Get $get) => in_array($get('designation'), ['3', '7']))
                         ->preload(),
 
                     Select::make('cluster_id')
@@ -146,8 +146,8 @@ class EmployeeResource extends Resource
                     ->relationship('clusterManager', 'emp_name')
                     ->searchable()
                         ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->emp_name} - ({$record->emp_id})")
-                        ->visible(fn (Get $get) => in_array($get('designation'), ['1', '2' , '3']))
-                        ->required(fn (Get $get) => in_array($get('designation'), ['3', '4']))
+                        ->visible(fn (Get $get) => in_array($get('designation'), ['7', '2' , '3']))
+                        ->required(fn (Get $get) => in_array($get('designation'), ['3', '2','7']))
                     ->preload(),
 
 
@@ -164,7 +164,23 @@ class EmployeeResource extends Resource
                     ->suffixIcon('heroicon-m-calendar')
                     ->maxDate(now()),
 
-                    TextInput::make('cost_center'),
+                    // TextInput::make('cost_center'),
+
+                    Select::make('cost_center')
+                    ->label('Cost Center')
+                    ->options([
+                        'anuj_singh_thakur' => 'Anuj Singh Thakur',
+                        'bhupendra_singh'   => 'Bhupendra Singh',
+                        'chanchal_chaudhary' => 'Chanchal Chaudhary',
+                        'deepak_singh'      => 'Deepak Singh',
+                        'kanak_kumar'       => 'Kanak Kumar',
+                        'manoj_sajwan'      => 'Manoj Sajwan',
+                        'nitin_thakur'      => 'Nitin Thakur',
+                        'prabhat_tyagi'     => 'Prabhat Tyagi',
+                        'rohit_sharma'      => 'Rohit Sharma',
+                    ])
+                    ->required() 
+                    ->native(false),
 
                     // TextInput::make('unit_name'),
 
@@ -181,16 +197,16 @@ class EmployeeResource extends Resource
                     Select::make('exit_status')
                         ->label('Active Status')
                         ->options([
-                            'no' => 'Inactive',
-                            'yes' => 'Active',
+                            'yes' => 'Inactive',
+                            'no' => 'Active',
                         ])
-                        ->default('yes')
+                        ->default('no')
                         ->required()
                         ->native(false)
                         ->live()
                         ->afterStateUpdated(function (Set $set, $state) {
                            
-                            if ($state === 'yes') {
+                            if ($state === 'no') {
                                 $set('exit_date', null);
                             }
                         }),
@@ -201,8 +217,8 @@ class EmployeeResource extends Resource
                         ->displayFormat('d F Y')
                         ->suffixIcon('heroicon-m-calendar')
                         ->maxDate(now())
-                        ->visible(fn (Get $get) => $get('exit_status') === 'no') 
-                        ->required(fn (Get $get) => $get('exit_status') === 'no'), 
+                        ->visible(fn (Get $get) => $get('exit_status') === 'yes') 
+                        ->required(fn (Get $get) => $get('exit_status') === 'yes'), 
 
                 ])
                 ->columns(2)

@@ -9,15 +9,17 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password','is_active'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable , HasRoles;
+    use HasFactory, Notifiable ,HasRoles;
 
     /**
      * Get the attributes that should be cast.
@@ -35,8 +37,16 @@ class User extends Authenticatable
 
     public function employee()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(Employee::class,'employee_id');
     }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Check if email matches, or restore your Spatie roles logic here if needed
+        // return $this->email === 'prakash@gmail.com';
+        return true;
+    }
+  
 
     
     

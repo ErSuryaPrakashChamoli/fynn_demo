@@ -12,6 +12,10 @@ use Filament\Tables\Columns\TextColumn;
 use App\Filament\Resources\FollowUps\FollowUpResource;
 
 
+use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
+
+
 class FollowUpsTable
 {
     public static function configure(Table $table): Table
@@ -76,4 +80,7 @@ class FollowUpsTable
                 ]),
             ]);
     }
+
+
+
 }

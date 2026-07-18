@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\Activitylog\Models\Activity;
+use App\Models\ActivityLog;
 
 class Customer extends Model
 {
@@ -53,55 +55,96 @@ class Customer extends Model
             'assign_to',
             'employee_id',
             'eligible_loan_amount',
-            'docking'
+            'docking',
+            'underwriting_status',
+            'approved_loan_amount',
+            'disbursal_status',
+            'carry_forward_date',
+            'channel',
+            'disbursal_pdf',
+            'other_loan_applied',
+            'documents_submitted',
+            'disbursal_finalized',
+            'approval_date',
+            'other_sanctioned_bank'
         ];
 
 
-    protected static function booted(): void
-        {
-            static::creating(function ($customer) {
+        protected $casts = [
+            'pending_document' => 'array',
+            'disbursal_pdf' => 'array', 
+            'documents_submitted' => 'boolean',
+        ];
 
-                if (blank($customer->application_no)) {
 
-                    $date = now()->format('ymd'); // 260630
+        protected static function booted(): void
+            {
+                static::creating(function ($customer) {
 
-                    $last = self::whereDate('created_at', today())
-                        ->where('application_no', 'like', "FA{$date}%")
-                        ->latest('id')
-                        ->first();
+                    if (blank($customer->application_no)) {
 
-                    $sequence = 1;
+                        $date = now()->format('ymd'); // 260630
 
-                    if ($last) {
-                        $sequence = (int) substr($last->application_no, -6) + 1;
+                        $last = self::whereDate('created_at', today())
+                            ->where('application_no', 'like', "FA{$date}%")
+                            ->latest('id')
+                            ->first();
+
+                        $sequence = 1;
+
+                        if ($last) {
+                            $sequence = (int) substr($last->application_no, -6) + 1;
+                        }
+
+                        $customer->application_no = sprintf(
+                            'FA%s%06d',
+                            $date,
+                            $sequence
+                        );
                     }
+                });
+            }
 
-                    $customer->application_no = sprintf(
-                        'FA%s%06d',
-                        $date,
-                        $sequence
+            public function assignedTo()
+            {
+                return $this->belongsTo(Employee::class, 'assign_to');
+            }
+
+            public function createdBy()
+            {
+                return $this->belongsTo(Employee::class, 'created_by');
+            }
+
+            public function followUps()
+            {
+                return $this->hasMany(FollowUp::class);
+            }
+
+            public function getActivitylogOptions(): LogOptions
+            {
+                return LogOptions::defaults()
+                    ->logAll()              
+                    ->logOnlyDirty()        
+                    ->dontLogEmptyChanges();
+            }
+
+            public function activities()
+                {
+                    return $this->morphMany(
+                        ActivityLog::class,
+                        'subject'
                     );
                 }
-            });
-        }
 
-        public function assignedTo()
+                public function documents()
+                    {
+                        return $this->hasMany(CustomerDocument::class);
+                    }
+
+
+        public function employee()
         {
-            return $this->belongsTo(Employee::class, 'assign_to');
+            return $this->belongsTo(Employee::class, 'employee_id');
         }
-
-        public function followUps()
-        {
-            return $this->hasMany(FollowUp::class);
-        }
-
-        public function getActivitylogOptions(): LogOptions
-        {
-            return LogOptions::defaults()
-                ->logAll()              
-                ->logOnlyDirty()        
-                ->dontLogEmptyChanges();
-        }
-
 
 }

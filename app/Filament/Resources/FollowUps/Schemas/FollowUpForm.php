@@ -101,7 +101,15 @@ class FollowUpForm
                             ->default('Pending')
                             ->required(),
 
-                        DatePicker::make('next_follow_up_date'),
+                        // DatePicker::make('next_follow_up_date'),
+
+                        DatePicker::make('next_follow_up_date')
+                        ->label('Next Follow Up Date')
+                        ->displayFormat('d F Y')
+                        ->native(false)
+                        ->suffixIcon('heroicon-m-calendar')
+                        ->minDate(now()->addDay())
+                        ->required(),
 
                         Textarea::make('remarks')
                             ->rows(5)

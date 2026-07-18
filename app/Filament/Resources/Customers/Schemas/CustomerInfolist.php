@@ -3,192 +3,390 @@
 namespace App\Filament\Resources\Customers\Schemas;
 
 use Filament\Schemas\Schema;
-
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Split;
+use Filament\Infolists\Components\RepeatableEntry;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Filament\Actions\Action;
+// use Illuminate\Support\Facades\Storage;
+
+
 
 class CustomerInfolist
 {
     public static function configure(Schema $schema): Schema
     {
-        // return $schema
-        //     ->components([
-                
-        //         //
-        //     ]);
+        return $schema
+            ->components([
 
-           return $schema->schema([
+                Section::make('👤 Customer Overview')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
 
-           View::make('filament.components.customer-journey-progress')
-                    ->key('customerJourneyProgress')
-                    ->columnSpanFull()
-                   
-                    ->extraAttributes([
-                        // 'self-start' is the magic class that makes sticky work in CSS Grid
-                        'class' => 'sticky z-50 self-start',
-                        // Force the top margin so it sits neatly under the Filament navbar
-                        'style' => 'top: 5.5rem;', 
+                                TextEntry::make('customer_name')
+                                    ->label('Customer Name'),
+
+                                TextEntry::make('mobile_no')
+                                    ->label('Mobile'),
+
+                                TextEntry::make('email')
+                                    ->label('Email'),
+
+                                TextEntry::make('pan_number')
+                                    ->label('PAN')
+                                    ->badge(),
+
+                                TextEntry::make('assignedTo.emp_name')
+                                    ->label('Assigned To'),
+
+
+                                TextEntry::make('journey_status')
+                                    ->label('Current Stage')
+                                    ->badge()
+                                    ->color(fn($state) => match ($state) {
+                                        'New Lead' => 'gray',
+                                        'Eligibility Check' => 'info',
+                                        'Underwriting' => 'warning',
+                                        'Credit Approval' => 'success',
+                                        'Disbursal' => 'primary',
+                                        'Completed' => 'success',
+                                        'Rejected' => 'danger',
+                                        default => 'gray',
+                                    }),
+
+                                TextEntry::make('created_at')
+                                    ->dateTime(),
+
+                                TextEntry::make('updated_at')
+                                    ->dateTime(),
+
+                            ])
                     ]),
-            Section::make('Customer Basic Details')
-                ->schema([
-                    TextEntry::make('customer_name')
-                        ->label('Customer Name'),
 
-                    TextEntry::make('mobile_no')
-                        ->label('Mobile No'),
 
-                    TextEntry::make('email')
-                        ->label('Email'),
+                Section::make('📍 Personal Details')
+                    ->schema([
 
-                    TextEntry::make('pan_number')
-                        ->label('PAN Number'),
+                        Grid::make(3)
+                            ->schema([
 
-                    TextEntry::make('job_location')
-                        ->label('Job Location'),
+                                TextEntry::make('current_location'),
 
-                    TextEntry::make('residence_location')
-                        ->label('Residence Location'),
+                                TextEntry::make('residence_location'),
 
-                    TextEntry::make('salary')
-                        ->label('Salary')
-                        ->formatStateUsing(fn ($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-'),
+                                TextEntry::make('job_location'),
 
-                    TextEntry::make('current_location')
-                        ->label('Current Location'),
+                                // TextEntry::make('company_category'),
 
-                    TextEntry::make('eligibility_status')
-                        ->label('Eligibility')
-                        ->badge(),
+                                TextEntry::make('salary')
+                                    ->money('INR'),
 
-                    TextEntry::make('eligibility_reason')
-                        ->label('Not Eligible Reason')
-                        ->visible(fn ($record): bool => strtolower((string) $record->eligibility_status) === 'not_eligible'),
+                                TextEntry::make('eligibility_status')
+                                    ->badge(),
 
-                        TextEntry::make('company_category')
-                        ->label('Company Category')
-                        ->formatStateUsing(fn ($state) => $state ?: '-'),
+                            ])
+                    ]),
 
-                    TextEntry::make('loan_applied')
-                        ->label('Loan Applied For')
-                        ->formatStateUsing(function ($state, $record) {
-                            if (strtolower((string) $state) === 'other') {
-                                return $record->other_loan_applied ?: '-';
-                            }
-                            return $state ?: '-';
-                        }),
 
-                    TextEntry::make('bank_eligible_for')
-                        ->label('Bank Eligible For')
-                        ->formatStateUsing(function ($state, $record) {
-                            if (strtolower((string) $state) === 'other') {
-                                return $record->other_bank_eligible_for ?: '-';
-                            }
-                            return $state ?: '-';
-                        }),
+                Section::make('🏦 Loan Application Details')
+                    ->schema([
 
-                    TextEntry::make('journey_status')
-                        ->label('Journey Status')
-                        ->badge()
-                        ->formatStateUsing(fn ($state) => $state ?: '-'),
-                        TextEntry::make('assignedTo.emp_name')
-                        ->label('Assigned To')
-                        ->badge()
-                        ->color('primary')
-                        ->placeholder('Not Assigned'),
+                        Grid::make(3)
+                            ->schema([
 
-                    TextEntry::make('journey_not_approved_reason')
-                        ->label('Not Approved Reason')
-                        ->visible(fn ($record): bool => strtolower((string) $record->journey_status) === 'not_approved'),
+                                TextEntry::make('loan_applied'),
 
-                    // Shows rejection remarks as long as they aren't empty
-                    TextEntry::make('not_approved_remarks')
-                        ->label('Rejection Remarks')
-                        ->columnSpanFull()
-                        ->visible(fn ($record): bool => filled($record->not_approved_remarks)),
-                ])
-                ->columnSpanFull()
-                ->columns(3),
-             
+                                TextEntry::make('other_bank_eligible_for'),
 
-           
+                                TextEntry::make('bank_eligible_for'),
 
-            Section::make('Sanctioned Details')
-                ->schema([
-                    TextEntry::make('channel')
-                        ->label('Channel')
-                        ->visible(fn ($record): bool => strtolower((string) $record->journey_status) === 'sanctioned'),
+                                TextEntry::make('other_bank_eligible_for'),
 
-                    TextEntry::make('application_no')
-                        ->label('Application No'),
+                                TextEntry::make('application_no'),
 
-                    TextEntry::make('lan_no')
-                        ->label('LAN No'),
+                                TextEntry::make('lan_no'),
 
-                    TextEntry::make('sanctioned_bank')
-                        ->label('Bank'),
+                                TextEntry::make('journey_status')
+                                    ->badge(),
 
-                    TextEntry::make('sanctioned_loan_amount')
-                        ->label('Loan Amount')
-                        ->formatStateUsing(fn ($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-'),
+                                TextEntry::make('underwriting_status')
+                                    ->badge(),
 
-                    TextEntry::make('cashback')
-                        ->label('Cashback')
-                        ->formatStateUsing(fn ($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-'),
+                            ])
+                    ]),
 
-                    TextEntry::make('subvention')
-                        ->label('Subvention')
-                        ->formatStateUsing(fn ($state) => filled($state) ? '₹' . number_format((float) $state, 0) : '-'),
 
-                    TextEntry::make('payout_rate')
-                        ->label('Payout Rate'),
+                Section::make('📑 Step 1 - Source File Logging')
+                    ->schema([
+                        Grid::make(3)
+                            ->schema([
 
-                    TextEntry::make('bank_condition')
-                        ->label('Bank Condition')
-                        ->columnSpanFull(),
+                                TextEntry::make('eligible_loan_amount')
+                                    ->money('INR'),
 
-                    TextEntry::make('attachment_required')
-                        ->label('Attachment Required'),
+                                TextEntry::make('documentation_status')
+                                    ->badge(),
 
-                    TextEntry::make('attachment_file')
-                        ->label('Attachment File'),
-                ])
-                ->columns(2)
-                ->visible(fn ($record): bool => in_array(strtolower((string) $record->journey_status), ['sfl', 'underwriting', 'approved', 'sanctioned'])),
-                
-            // CREATED A DEDICATED REMARKS SECTION FOR THE AUDIT TRAIL
-            Section::make('Remarks History')
-                ->schema([
-                    TextEntry::make('sfl_remarks')
-                        ->label('SFL Remarks')
-                        ->columnSpanFull()
-                        ->visible(fn ($record): bool => filled($record->sfl_remarks)),
+                                TextEntry::make('pending_documents'),
 
-                    TextEntry::make('underwriting_remarks')
-                        ->label('Underwriting Remarks')
-                        ->columnSpanFull()
-                        ->visible(fn ($record): bool => filled($record->underwriting_remarks)),
+                                TextEntry::make('sfl_remarks')
+                                    ->columnSpan(2),
 
-                    TextEntry::make('approved_remarks')
-                        ->label('Approved Remarks')
-                        ->columnSpanFull()
-                        ->visible(fn ($record): bool => filled($record->approved_remarks)),
+                                // TextEntry::make('sflCompletedBy.name')
+                                //     ->label('Completed By'),
 
-                    TextEntry::make('sanctioned_remarks')
-                        ->label('Sanctioned Remarks')
-                        ->columnSpanFull()
-                        ->visible(fn ($record): bool => filled($record->sanctioned_remarks)),
-                ])
-                ->columns(1)
-                // This entire section hides if NO remarks have been typed yet
-                ->hidden(fn ($record): bool => 
-                    blank($record->sfl_remarks) && 
-                    blank($record->underwriting_remarks) && 
-                    blank($record->approved_remarks) && 
-                    blank($record->sanctioned_remarks)
-                ),
-        ]);
+                                // TextEntry::make('sfl_completed_date')
+                                //     ->dateTime(),
 
-        
+                            ])
+
+                    ]),
+
+
+
+
+                Section::make('🔍 Step 2 - Underwriting')
+                    ->schema([
+
+                        Grid::make(3)
+                            ->schema([
+
+                                TextEntry::make('underwriting_status')
+                                    ->badge(),
+
+                                TextEntry::make('underwriting_remarks')
+                                    ->columnSpan(2),
+                                TextEntry::make('approval_date')
+                                    ->dateTime(),
+
+                            ])
+                    ]),
+
+
+
+                Section::make('✅ Step 3 - Credit Approval')
+                    ->schema([
+
+                        Grid::make(3)
+                            ->schema([
+
+                                TextEntry::make('approved_loan_amount')
+                                    ->money('INR'),
+
+                                TextEntry::make('bank_eligible_for'),
+
+                                TextEntry::make('approval_remarks')
+                                    ->columnSpan(2),
+
+                            ])
+                    ]),
+
+
+
+                Section::make('💰 Step 4 - Disbursal')
+                    ->schema([
+
+                        Grid::make(3)
+                            ->schema([
+
+                                TextEntry::make('channel'),
+
+                                TextEntry::make('sanctioned_bank'),
+
+                                TextEntry::make('sanctioned_loan_amount')
+                                    ->money('INR'),
+
+                                TextEntry::make('cashback')
+                                ->money('INR'),
+
+                                TextEntry::make('subvention')
+                                ->money('INR'),
+
+                                TextEntry::make('docking')
+                                ->money('INR'),
+
+                                TextEntry::make('payout_rate'),
+
+                            ])
+                    ]),
+
+
+                Section::make('Customer Documents')
+                    ->schema([
+
+                        RepeatableEntry::make('documents')
+                            ->label('')
+                            ->contained(true)
+                            ->schema([
+
+                                TextEntry::make('document_type')
+                                    ->label('Document Type')
+                                    ->badge(),
+
+                                TextEntry::make('document_name')
+                                    ->label('File Name'),
+
+                                TextEntry::make('created_at')
+                                    ->label('Uploaded On')
+                                    ->dateTime('d M Y, h:i A'),
+
+                                TextEntry::make('uploader.name')
+                                    ->label('Uploaded By')
+                                    ->default('System'),
+
+                                // TextEntry::make('document_path')
+                                //     ->label('Document')
+                                //     ->formatStateUsing(fn() => '📄 View PDF')
+                                //     ->url(fn($state) => Storage::disk('public')->url($state))
+                                //     ->openUrlInNewTab(),
+
+
+                                TextEntry::make('document_path')
+                                    ->label('Document')
+                                    ->formatStateUsing(fn () => '📄 View PDF')
+                                    ->action(
+                                        Action::make('viewPdf')
+                                            ->label('')
+
+                                            ->modalHeading('Disbursal Document')
+
+                                            ->modalWidth('7xl')
+
+                                            ->modalSubmitAction(false)
+
+                                            ->modalCancelActionLabel('Close')
+
+                                            ->modalContent(function ($state) {
+                                                //   dd($state);
+
+                                                return view(
+                                                    'filament.components.pdf-viewer',
+                                                    [
+                                                        'url' => Storage::disk('public')->url($state),
+                                                    ]
+                                                );
+
+                                            })
+                                    ),
+
+                            ])
+                            ->columns(5),
+
+                    ])
+                    ->visible(fn($record) => $record?->documents()->exists())
+                    ->columnSpanFull(),
+
+
+
+                Section::make('❌ Rejection Details')
+                    ->visible(
+                        fn($record) =>
+                        $record->journey_status === 'rejected'
+                    )
+                    ->schema([
+
+                        TextEntry::make('rejection_reason'),
+
+                        TextEntry::make('rejection_remarks'),
+
+                    ]),
+
+                Section::make('📝 Complete Activity Timeline')
+                    ->schema([
+
+                        RepeatableEntry::make('activities')
+                            ->label('')
+                            ->schema([
+
+                                TextEntry::make('description')
+                                    ->label('Activity')
+                                    ->columnSpanFull(),
+
+
+                                TextEntry::make('causer.name')
+                                    ->label('Changed By'),
+
+
+                                TextEntry::make('created_at')
+                                    ->label('Date & Time')
+                                    ->dateTime(),
+
+
+              
+
+                            TextEntry::make('changes')
+                                ->label('Field Changes')
+                                ->html()
+                                ->columnSpanFull()
+                                ->formatStateUsing(function ($state, $record) {
+
+                                    $changes = $record->changes ?? [];
+
+                                    $old = $changes['old'] ?? [];
+                                    $new = $changes['new'] ?? [];
+
+                                    if (empty($old) && empty($new)) {
+                                        return '<span class="text-gray-500">No field changes</span>';
+                                    }
+
+                                    $html = '';
+
+                                    foreach ($old as $field => $oldValue) {
+
+                                        $newValue = $new[$field] ?? null;
+
+                                        // Convert arrays to readable text
+                                        // if (is_array($oldValue)) {
+                                        //     $oldValue = implode(', ', $oldValue);
+                                        // }
+
+                                        // if (is_array($newValue)) {
+                                        //     $newValue = implode(', ', $newValue);
+                                        // }
+
+                                        if (is_array($oldValue)) {
+                                        $oldValue = json_encode($oldValue, JSON_PRETTY_PRINT);
+                                        }
+
+                                        if (is_array($newValue)) {
+                                        $newValue = json_encode($newValue, JSON_PRETTY_PRINT);
+                                        }
+
+                                        // Convert null values
+                                        $oldValue = $oldValue === null ? '-' : e($oldValue);
+                                        $newValue = $newValue === null ? '-' : e($newValue);
+
+                                        // Make field names readable
+                                        $label = Str::of($field)
+                                            ->replace('_', ' ')
+                                            ->title();
+
+                                        $html .= "
+                                            <div class='mb-4 p-3 rounded border'>
+                                                <div><strong>{$label}</strong></div>
+                                                <div class='text-danger'>Old: {$oldValue}</div>
+                                                <div class='text-success'>New: {$newValue}</div>
+                                            </div>
+                                        ";
+                                    }
+
+                                    return $html;
+                                    })
+                                    ->html()
+                                    ->columnSpanFull(),
+
+                            ])
+                            ->columns(3),
+
+                    ])
+
+            ]);
     }
 }

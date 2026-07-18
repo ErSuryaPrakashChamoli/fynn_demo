@@ -25,7 +25,14 @@ class FollowUpResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
+        // return FollowUpForm::configure($schema);
+    //     if (request()->query('mode') === 'prospect') {
+    //     return FollowUpForm::prospect($schema);
+    // }
+
+    // // Default configuration (Existing Customer view)
         return FollowUpForm::configure($schema);
+        
     }
 
     public static function table(Table $table): Table

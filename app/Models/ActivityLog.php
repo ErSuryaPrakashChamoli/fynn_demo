@@ -24,4 +24,18 @@ class ActivityLog extends Model
     public function subject(){
             return $this->morphTo();
         }
+
+ public function getChangesAttribute()
+    {
+        $changes = $this->attribute_changes;
+
+        if (!$changes) {
+            return [];
+        }
+
+        return [
+            'old' => $changes['old'] ?? [],
+            'new' => $changes['attributes'] ?? [],
+        ];
+    }
 }

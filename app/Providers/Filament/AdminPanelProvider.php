@@ -22,6 +22,12 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 // use App\Filament\Widgets\AchievementChart;
 use App\Filament\Widgets\DailyCommitmentStats;
 use App\Filament\Widgets\TargetStats;
+use App\Filament\Widgets\IncentiveStats;
+
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
+
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -34,11 +40,22 @@ class AdminPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->brandLogo(asset('images/fynnedge.jpeg'))
-            ->registration()
+             ->brandLogoHeight('8.5rem')
+              ->sidebarFullyCollapsibleOnDesktop()
+            //   ->sidebarWidth('13rem')
+              ->globalSearch(false)
+            // ->registration()
             ->brandName('Finn On')
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->renderHook(
+                // PanelsRenderHook::TOPBAR_START,
+                PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                function () {
+                    return Blade::render('@livewire("top-performer-marquee")');
+                }
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -51,6 +68,7 @@ class AdminPanelProvider extends PanelProvider
                 // AchievementChart::class,
                 TargetStats::class,
                 DailyCommitmentStats::class,
+                IncentiveStats::class,
                
                
             ])

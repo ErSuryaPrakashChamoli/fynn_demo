@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Employee;
 use Illuminate\Support\Carbon;
 use NumberFormatter;
+use App\Models\EmployeeReportingHistory;
 
 
 
@@ -18,27 +19,73 @@ class TargetStats extends StatsOverviewWidget
 
     protected static ?int $sort = 1;
 
-    protected function getStats(): array
-    {
 
 
-        $login_user = auth()->user();
-        $employee = Employee::where('id', $login_user->employee_id)->first();
-        
-        $target = 0;
-        $achievement = 0;
-        $totalCashback = 0;
-        $totalSubvention = 0;
-        
-        $targetLevel = '🥈 Target Calculation';
-        $targetColor = 'info';
+protected function getStats(): array
+{
+    $loginUser = auth()->user();
 
-        if ($employee) {
-            $designation = $employee->designation; // '1' = Caller, '2' = TL, '3' = Manager, '4' = Cluster
+    $target = 0;
+    $achievement = 0;
+    $totalCashback = 0;
+    $totalSubvention = 0;
+    $docking = 0;
+
+    $targetLevel = '🥈 Target Calculation';
+    $targetColor = 'info';
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+    if ($loginUser->hasRole('Admin')) {
+
+        $achievement = Customer::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('sanctioned_loan_amount');
+
+        $totalCashback = Customer::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('cashback');
+
+        $totalSubvention = Customer::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('subvention');
+
+        $docking = Customer::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('docking');
+
+        $target = Employee::where('designation', '1')
+            ->get()
+            ->sum(fn ($emp) => $this->getCallerTarget($emp));
+
+        $targetLevel = '🏢 Company Target';
+        $targetColor = 'success';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | EMPLOYEE DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+    else {
+
+        $employee = Employee::find($loginUser->employee_id);
+
+        if (! $employee) {
+            return [];
+        }
+
+        $designation = $employee->designation;
+
+
 
             if ($designation === '1') {
                 // --- 1. CALLER LOGIC ---
-                $target = is_numeric($employee->category) ? (float) $employee->category : 2500000;
+                // $target = is_numeric($employee->category) ? (float) $employee->category : 2500000;
+                $target = $this->getCallerTarget($employee);
                 
                 $achievement = Customer::where('employee_id', $employee->id)
                     ->whereMonth('created_at', Carbon::now()->month)
@@ -54,6 +101,11 @@ class TargetStats extends StatsOverviewWidget
                     ->whereMonth('created_at', Carbon::now()->month)
                     ->whereYear('created_at', Carbon::now()->year)
                     ->sum('subvention');
+
+                $docking = Customer::where('employee_id', $employee->id)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('docking');
                 
                 if ($target >= 3500000) {
                     $targetLevel = '💎 Diamond Target';
@@ -70,12 +122,10 @@ class TargetStats extends StatsOverviewWidget
                 // --- 2. TEAM LEADER LOGIC ---
                 $callerIds = Employee::where('superviser_id', $employee->id)->pluck('id')->toArray();
                 $callerCount = count($callerIds);
-
-                // अगर डेटाबेस में कैटेगरी खाली या स्ट्रिंग है, तो डिफ़ॉल्ट 25 लाख केवल कॉलर्स ('1') के लिए मानें
                 $baseTarget = Employee::whereIn('id', $callerIds)
-                    ->where('designation', '1')
-                    ->get()
-                    ->sum(fn($emp) => is_numeric($emp->category) ? (float)$emp->category : 2500000);
+                            ->where('designation', '1')
+                            ->get()
+                            ->sum(fn ($emp) => $this->getCallerTarget($emp));
 
                 if ($callerCount < 3) {
                     $target = $baseTarget + 3000000;
@@ -102,6 +152,11 @@ class TargetStats extends StatsOverviewWidget
                     ->whereYear('created_at', Carbon::now()->year)
                     ->sum('subvention');
 
+                $docking = Customer::where('employee_id', $employee->id)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('docking');
+
             } elseif ($designation === '3') {
                 // --- 3. MANAGER LOGIC (STRICT HIERARCHY FIX) ---
                 $teamLeaderIds = Employee::where('manager_id', $employee->id)
@@ -109,7 +164,6 @@ class TargetStats extends StatsOverviewWidget
                     ->pluck('id')
                     ->toArray();
 
-                // केवल वो कॉलर्स जो इन टीम लीडर्स के अंतर्गत काम कर रहे हैं
                 $callerIds = [];
                 if (!empty($teamLeaderIds)) {
                     $callerIds = Employee::whereIn('superviser_id', $teamLeaderIds)
@@ -117,27 +171,26 @@ class TargetStats extends StatsOverviewWidget
                         ->pluck('id')
                         ->toArray();
                 }
-
-                // वो डायरेक्ट कॉलर्स जो बिना किसी TL के सीधे इस मैनेजर को रिपोर्ट कर रहे हैं
                 $directCallers = Employee::where('manager_id', $employee->id)
                     ->where('designation', '1')
                     ->pluck('id')
                     ->toArray();
 
-                // टारगेट और अचीवमेंट के लिए केवल एक्चुअल एक्टिव कॉलर्स की आईडी मर्ज करें (टीएल आईडी को बाहर रखें)
+                
                 $allActiveCallers = array_unique(array_merge($callerIds, $directCallers));
                 $allSubordinateIds = array_unique(array_merge($teamLeaderIds, $allActiveCallers));
 
                 if (!empty($allActiveCallers)) {
-                    // यहाँ डिफ़ॉल्ट वैल्यू केवल वास्तविक कॉलर्स के लिए ही ट्रिगर होगी
+                
                     $target = Employee::whereIn('id', $allActiveCallers)
                         ->get()
-                        ->sum(fn($emp) => is_numeric($emp->category) ? (float)$emp->category : 2500000);
+                         ->sum(fn ($emp) => $this->getCallerTarget($emp));
+                        // ->sum(fn($emp) => is_numeric($emp->category) ? (float)$emp->category : 2500000);
                 } else {
                     $target = 0;
                 }
 
-                // प्रत्येक शॉर्ट-टीम टीएल के लिए मैनेजर के कुल टारगेट में ₹30 लाख जोड़ें
+    
                 foreach ($teamLeaderIds as $tlId) {
                     $tlCallerCount = Employee::where('superviser_id', $tlId)->where('designation', '1')->count();
                     if ($tlCallerCount < 3) {
@@ -160,6 +213,11 @@ class TargetStats extends StatsOverviewWidget
                         ->whereMonth('created_at', Carbon::now()->month)
                         ->whereYear('created_at', Carbon::now()->year)
                         ->sum('subvention');
+
+                $docking = Customer::where('employee_id', $employee->id)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('docking');
                 }
 
                 $targetLevel = '👔 Manager (Subordinates + TL Penalties)';
@@ -167,6 +225,7 @@ class TargetStats extends StatsOverviewWidget
 
             } elseif ($designation === '4') {
                 // --- 4. CLUSTER MANAGER LOGIC ---
+            //    dd("call");
                 $managerIds = Employee::where('cluster_id', $employee->id)->where('designation', '3')->pluck('id')->toArray();
                 $teamLeaderIds = [];
                 if (!empty($managerIds)) {
@@ -183,7 +242,8 @@ class TargetStats extends StatsOverviewWidget
                 if (!empty($callerIds)) {
                     $target = Employee::whereIn('id', $callerIds)
                         ->get()
-                        ->sum(fn($emp) => is_numeric($emp->category) ? (float)$emp->category : 2500000);
+                         ->sum(fn ($emp) => $this->getCallerTarget($emp));
+                        // ->sum(fn($emp) => is_numeric($emp->category) ? (float)$emp->category : 2500000);
                 } else {
                     $target = 0;
                 }
@@ -194,6 +254,8 @@ class TargetStats extends StatsOverviewWidget
                         $target += 3000000; 
                     }
                 }
+
+               
 
                 if (!empty($allTeamIds)) {
                     $achievement = Customer::whereIn('employee_id', $allTeamIds)
@@ -210,42 +272,166 @@ class TargetStats extends StatsOverviewWidget
                         ->whereMonth('created_at', Carbon::now()->month)
                         ->whereYear('created_at', Carbon::now()->year)
                         ->sum('subvention');
+
+                    $docking = Customer::where('employee_id', $employee->id)
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('docking');
+
                 }
 
                 $targetLevel = '🏢 Cluster Manager (Total Hierarchy Sum)';
                 $targetColor = 'danger';
             }
-        }
-
-        $countAchievement = $achievement - ((($totalCashback + $totalSubvention) / 2) * 100);
-        $pending = max(0, $target - $countAchievement);
-        $remainingDays = max(1, Carbon::now()->daysInMonth - Carbon::now()->day);
-        $drr = $pending / $remainingDays;
-
-        $indianCurrencyFormatter = new NumberFormatter('en_IN', NumberFormatter::CURRENCY); 
-        $indianCurrencyFormatter->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 0);
-
-        return [
-            Stat::make('🎯 Target', $indianCurrencyFormatter->formatCurrency($target, 'INR'))
-                ->description($targetLevel)
-                ->color($targetColor),
-
-            Stat::make('💰 Actual Achievement', $indianCurrencyFormatter->formatCurrency($achievement, 'INR'))
-                ->description('Disbursed Loan Volume')
-                ->color('success'),
-             
-            Stat::make('📊 Count Achievement', $indianCurrencyFormatter->formatCurrency($countAchievement, 'INR'))
-                ->description('Adjusted Net Volume')
-                ->color('primary'),
-
-            Stat::make('⏳ Pending Target', $indianCurrencyFormatter->formatCurrency($pending, 'INR'))
-                ->description('Remaining Target')
-                ->color($pending > 0 ? 'warning' : 'success'),
-
-            Stat::make('📈 DRR', $indianCurrencyFormatter->formatCurrency($drr, 'INR'))
-                ->description('Daily Required Run Rate')
-                ->color($drr > 0 ? 'danger' : 'success'),
-        ];
 
     }
+
+    $countAchievement = $achievement - ((($totalCashback + $totalSubvention + $docking) / 2) * 100);
+    $pending = max(0, $target - $countAchievement);
+    $remainingDays = max(1, now()->daysInMonth - now()->day);
+    $drr = $pending / $remainingDays;
+
+    $formatter = new NumberFormatter('en_IN', NumberFormatter::CURRENCY);
+    $formatter->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 0);
+
+    return [
+        Stat::make('🎯 Target', $formatter->formatCurrency($target, 'INR'))
+            ->description($targetLevel)
+            ->color($targetColor),
+
+        Stat::make('💰 Actual Achievement', $formatter->formatCurrency($achievement, 'INR'))
+            ->description('Disbursed Loan Volume')
+            ->color('success'),
+
+        Stat::make('📊 Count Achievement', $formatter->formatCurrency($countAchievement, 'INR'))
+            ->description('Adjusted Net Volume')
+            ->color('primary'),
+
+        Stat::make('⏳ Pending Target', $formatter->formatCurrency($pending, 'INR'))
+            ->description('Remaining Target')
+            ->color($pending > 0 ? 'warning' : 'success'),
+
+        Stat::make('📈 DRR', $formatter->formatCurrency($drr, 'INR'))
+            ->description('Daily Required Run Rate')
+            ->color($drr > 0 ? 'danger' : 'success'),
+    ];
+}
+
+
+    private function getCallerTarget(Employee $employee): float
+        {
+
+            $today = Carbon::now();
+
+            $currentMonth = $today->month;
+            $currentYear  = $today->year;
+
+            $monthStart = $today->copy()->startOfMonth();
+            $monthEnd   = $today->copy()->endOfMonth();
+
+            /*
+            |--------------------------------------------------------------------------
+            | EXIT EMPLOYEE (ONLY FOR EXITS IN CURRENT MONTH)
+            |--------------------------------------------------------------------------
+            */
+
+            if (! empty($employee->exit_date)) {
+
+                $exitDate = Carbon::parse($employee->exit_date);
+
+                if (
+                    $exitDate->month == $currentMonth &&
+                    $exitDate->year == $currentYear
+                ) {
+
+                    $workedDays = $monthStart->diffInDays($exitDate) + 1;
+
+                    return $workedDays >= 10
+                        ? 1500000
+                        : 0;
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | NEW JOINER (ONLY IF JOINED THIS MONTH)
+            |--------------------------------------------------------------------------
+            */
+
+            // if (! empty($employee->reporting_date)) {
+             
+
+            //     $reportingDate = Carbon::parse($employee->reporting_date);
+
+            //     if (
+            //         $reportingDate->month == $currentMonth &&
+            //         $reportingDate->year == $currentYear
+            //     ) {
+
+            //         $remainingDays = $reportingDate->diffInDays($monthEnd) + 1;
+
+            //         return $remainingDays >= 10
+            //             ? 1500000
+            //             : 0;
+            //     }
+            // }
+
+
+    if (! empty($employee->doj)) {
+
+    $joiningDate = Carbon::parse($employee->doj);
+
+    if (
+        $joiningDate->month == $currentMonth &&
+        $joiningDate->year == $currentYear
+    ) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | New Joiner
+        | Reporting date decides when the employee starts reporting.
+        |--------------------------------------------------------------------------
+        */
+
+        $effectiveDate = ! empty($employee->reporting_date)
+            ? Carbon::parse($employee->reporting_date)
+            : $joiningDate;
+
+        $remainingDays = $effectiveDate->diffInDays($monthEnd) + 1;
+
+        return $remainingDays >= 10
+            ? 1500000
+            : 0;
+    }
+}
+
+            /*
+            |--------------------------------------------------------------------------
+            | EXISTING EMPLOYEE
+            |--------------------------------------------------------------------------
+            |
+            | Joined before current month.
+            | Always take category target.
+            | Ignore reporting_date.
+            | Ignore reporting history.
+            |
+            */
+
+            return is_numeric($employee->category)
+                ? (float) $employee->category
+                : 2500000;
+        }
+
+
+        protected function getAdminStats(): array
+            {
+                $target = Customer::whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('sanctioned_loan_amount');
+
+                return [
+                    Stat::make('Total Business', number_format($target))
+                        ->color('success'),
+                ];
+            }
 }
