@@ -30,6 +30,8 @@ class CustomerInfolist
                         Grid::make(3)
                             ->schema([
 
+
+
                                 TextEntry::make('customer_name')
                                     ->label('Customer Name'),
 
@@ -241,40 +243,42 @@ class CustomerInfolist
                                     ->label('Uploaded By')
                                     ->default('System'),
 
-                                // TextEntry::make('document_path')
-                                //     ->label('Document')
-                                //     ->formatStateUsing(fn() => '📄 View PDF')
-                                //     ->url(fn($state) => Storage::disk('public')->url($state))
-                                //     ->openUrlInNewTab(),
-
-
                                 TextEntry::make('document_path')
                                     ->label('Document')
-                                    ->formatStateUsing(fn () => '📄 View PDF')
-                                    ->action(
-                                        Action::make('viewPdf')
-                                            ->label('')
+                                    ->formatStateUsing(fn() => '📄 View PDF')
+                                    ->url(fn($state) => Storage::disk('public')->url($state))
+                                    ->openUrlInNewTab(),
 
-                                            ->modalHeading('Disbursal Document')
 
-                                            ->modalWidth('7xl')
+                                // TextEntry::make('document_path')
+                                //     ->label('Document')
+                                //     ->formatStateUsing(fn () => '📄 View PDF')
+                                //     ->action(
+                                //         Action::make('viewPdf')
+                                //             ->label('')
 
-                                            ->modalSubmitAction(false)
+                                //             ->modalHeading('Disbursal Document')
 
-                                            ->modalCancelActionLabel('Close')
+                                //             ->modalWidth('7xl')
 
-                                            ->modalContent(function ($state) {
-                                                //   dd($state);
+                                //             ->modalSubmitAction(false)
 
-                                                return view(
-                                                    'filament.components.pdf-viewer',
-                                                    [
-                                                        'url' => Storage::disk('public')->url($state),
-                                                    ]
-                                                );
+                                //             ->modalCancelActionLabel('Close')
 
-                                            })
-                                    ),
+                                //             ->modalContent(function ($state) {
+                                //                 //   dd($state);
+                                //                 // dd(Storage::disk('public')->url($state));
+                                //                 // dd(Storage::disk('public')->exists($state));
+
+                                //                 return view(
+                                //                     'filament.components.pdf-viewer',
+                                //                     [
+                                //                         'url' => Storage::disk('public')->url($state),
+                                //                     ]
+                                //                 );
+
+                                //             })
+                                //     ),
 
                             ])
                             ->columns(5),
@@ -319,7 +323,7 @@ class CustomerInfolist
                                     ->dateTime(),
 
 
-              
+
 
                             TextEntry::make('changes')
                                 ->label('Field Changes')

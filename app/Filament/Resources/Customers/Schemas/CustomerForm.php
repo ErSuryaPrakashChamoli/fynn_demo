@@ -26,9 +26,15 @@ use App\Models\CustomerDocument;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Hidden;
 
+use Filament\Forms\Components\Component;
+// use Filament\Forms\Components\TextInput;
+// use Filament\Forms\Get;
+// use Filament\Forms\Set;
+
 
 
 use Filament\Schemas\Components\Utilities\Set;
+
 
 
 class CustomerForm
@@ -70,6 +76,21 @@ class CustomerForm
         ];
 
         asort($banks);
+
+$currencyField = fn (string $name, string $label) => TextInput::make($name)
+    ->label($label)
+    ->prefix('₹')
+    ->live()
+    ->formatStateUsing(fn ($state) => filled($state) ? indianCurrencyFormat($state) : null)
+    ->afterStateUpdated(function ($state, Set $set) use ($name) {
+        $value = preg_replace('/[^0-9]/', '', (string) $state);
+
+        if ($value !== '') {
+            $set($name, indianCurrencyFormat($value));
+        }
+    })
+    ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+    ->visible(fn (Get $get) => $get('disbursal_status') === 'disbursed');
 
         return $schema
 
@@ -350,8 +371,8 @@ class CustomerForm
                                     $html .= sprintf(
                                         '
                                     <div class="text-sm">
-                                        <span class="font-semibold text-primary-600 dark:text-primary-400">%s</span> 
-                                        <span class="text-gray-500">changed to</span> 
+                                        <span class="font-semibold text-primary-600 dark:text-primary-400">%s</span>
+                                        <span class="text-gray-500">changed to</span>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">%s</span>
                                         <div class="text-xs text-gray-400 font-mono mt-0.5">%s by %s</div>
                                     </div>',
@@ -471,8 +492,8 @@ class CustomerForm
 
                                                     $set('documentation_status', 'complete');
                                                     $set('journey_status', 'underwriting');
-                                                    $set('underwriting_status', 'in_process');
-                                            
+                                                    // $set('underwriting_status', 'in_process');
+
                                                     return;
                                                 }
 
@@ -485,8 +506,8 @@ class CustomerForm
 
                                                 $set('documentation_status', 'complete');
                                                 $set('journey_status', 'underwriting');
-                                                $set('underwriting_status', 'in_process');
-                                              
+                                                // $set('underwriting_status', 'in_process');
+
 
                                                 $history = new \App\Models\CustomerStageHistory();
                                                 $history->customer_id  = $record->id;
@@ -642,6 +663,9 @@ class CustomerForm
                                     ->searchable()
                                     ->live(),
 
+                                Hidden::make('credit_approval_completed')
+                                ->dehydrated(true),
+
                                 TextInput::make('other_sanctioned_bank')
                                     ->label('Enter Bank Name')
                                     ->visible(fn($get) => $get('sanctioned_bank') === 'other')
@@ -668,16 +692,9 @@ class CustomerForm
                                             ->requiresConfirmation() // Confirmation popup trigger
                                             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
 
-                                                // $set('journey_status', 'sanctioned');
 
-
-                                                $record->update([
-                                                    'journey_status' => 'sanctioned',
-                                                    'credit_approval_completed' => true,
-                                                ]);
-
-                                                $set('journey_status', 'sanctioned');
                                                 $set('credit_approval_completed', true);
+                                                //  $set('journey_status', 'approved');
 
                                                 // 3. Central Audit Trail Registry Logging
                                                 CustomerStageHistory::create([
@@ -711,7 +728,8 @@ class CustomerForm
 
                         // ---------------- PROGRESSIVE STEP 4: DISBURSED SECTION ----------------
                         Section::make('Step 4: Disbursal Payouts & Close')
-                            ->disabled(fn(Get $get) => (bool) $get('disbursal_finalized'))
+                            // ->disabled(fn(Get $get) => (bool) $get('disbursal_finalized'))
+
                             ->schema([
 
                                 Select::make('disbursal_status')
@@ -722,6 +740,7 @@ class CustomerForm
                                         'dropped' => 'Dropped',
                                     ])
                                     ->live()
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->required(),
 
                                 Select::make('channel')
@@ -734,6 +753,7 @@ class CustomerForm
                                         'fast_credit' => 'Fast Credit',
                                         'kms_finbud' => 'KMS Finbud',
                                     ])
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->visible(
                                         fn(Get $get) =>
                                         in_array($get('disbursal_status'), [
@@ -758,6 +778,7 @@ class CustomerForm
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'disbursed')
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->required(fn(Get $get) => $get('disbursal_status') === 'disbursed'),
 
                                 TextInput::make('cashback')
@@ -773,6 +794,7 @@ class CustomerForm
                                         }
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'disbursed'),
 
                                 TextInput::make('subvention')
@@ -788,6 +810,7 @@ class CustomerForm
                                         }
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'disbursed'),
 
                                 TextInput::make('docking')
@@ -795,6 +818,7 @@ class CustomerForm
                                     ->prefix('₹')
                                     ->live()
                                     ->formatStateUsing(fn($state) => filled($state) ? indianCurrencyFormat($state) : null)
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $value = preg_replace('/[^0-9]/', '', (string) $state);
 
@@ -814,22 +838,27 @@ class CustomerForm
                                     ->displayFormat('d F Y')
                                     ->native(false)
                                     ->suffixIcon('heroicon-m-calendar')
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'carry_forward')
                                     ->required(fn(Get $get) => $get('disbursal_status') === 'carry_forward'),
 
                                 Textarea::make('sanctioned_remarks')
                                     ->label('Final Disbursal Remarks')
                                     ->rows(2)
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->columnSpanFull()
                                     ->required(),
 
+                                Hidden::make('disbursal_finalized')
+                                ->dehydrated(true),
+
                                 Placeholder::make('disbursal_actions')
                                     ->label('')
-                                    ->visible(
-                                        fn(Get $get): bool =>
-                                        ! $get('disbursal_finalized')
-                                            && $get('disbursal_status') === 'disbursed'
-                                    )
+                                    // ->visible(
+                                    //     fn(Get $get): bool =>
+                                    //     ! $get('disbursal_finalized')
+                                    //         && $get('disbursal_status') === 'disbursed'
+                                    // )
                                     ->hintAction(
                                         FormAction::make('finalize_disbursal')
                                             ->label('Finalize Disbursal')
@@ -837,11 +866,12 @@ class CustomerForm
                                             ->color('success')
                                             ->requiresConfirmation()
                                             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set ,  Get $get) {
+                                            // ->action(function (array $data, callable $set ,  Get $get) {
 
-                                
-                                                // if (! $record) {
-                                                //     return;
-                                                // }
+                                            // dd($record);
+                                                if (! $record) {
+                                                    return;
+                                                }
 
                                                 // $record->update([
                                                 //     'disbursal_finalized' => true,
@@ -849,27 +879,35 @@ class CustomerForm
 
                                                 $status = $get('disbursal_status');
 
+                                                // dd($status);
 
-                                                switch ($status) {
 
-                                                case 'disbursed':
-                                                    $set('journey_status', 'disbursal_documents');
-                                                    $set('disbursal_finalized', true);
-                                                    break;
 
-                                                case 'carry_forward':
-                                                    $set('journey_status', 'carry_forward');
-                                                    break;
+                                                // switch ($status) {
 
-                                                case 'dropped':
-                                                    $set('journey_status', 'dropped');
-                                                    $set('disbursal_finalized', true);
-                                                    break;
-                                                }
+                                                // case 'disbursed':
 
-                                               
+                                                //     $set('journey_status', 'sanctioned');
+                                                //     $set('disbursal_finalized', true);
+                                                //     $set('disbursal_status', 'disbursed');
+                                                //     break;
+
+                                                // case 'carry_forward':
+                                                //     $set('journey_status', 'carry_forward');
+                                                //     $set('disbursal_status', 'carry_forward');
+                                                //     break;
+
+                                                // case 'dropped':
+                                                //     $set('journey_status', 'dropped');
+                                                //     $set('disbursal_finalized', true);
+                                                //     $set('disbursal_status', 'dropped');
+                                                //     break;
+                                                // }
+
+
                                                 // $set('journey_status', 'sanctioned');
                                                 // $set('disbursal_finalized', true);
+                                                //  $set('disbursal_status', 'dropped');
 
                                                 CustomerStageHistory::create([
                                                     'customer_id'  => $record->id,
@@ -880,11 +918,20 @@ class CustomerForm
                                             })
                                     ),
                             ])
+
                             ->columns(2)
-                            ->visible(
-                                fn(Get $get): bool =>
-                                strtolower((string) $get('journey_status')) === 'sanctioned'
-                            ),
+                            ->visible(fn(Get $get) =>
+                            ($get('credit_approval_completed') ?? false)
+                            || in_array(strtolower((string) $get('journey_status')), [
+                                'sanctioned',
+                                'disbursal_documents',
+                                'carry_forward',
+                                'dropped',
+                                'disbursed'
+                            ])
+                        ),
+
+
 
 
                         Section::make('Disbursal Documents')
@@ -901,20 +948,40 @@ class CustomerForm
 
 
 
-                                FileUpload::make('disbursal_pdf')
-                                    ->label('Disbursal Documents')
-                                    ->directory('disbursal-documents')
-                                    ->disk('public')
-                                    ->acceptedFileTypes(['application/pdf'])
-                                    ->multiple()
-                                    ->appendFiles()
-                                    ->reorderable(false)
-                                    ->downloadable()
-                                    ->openable()
-                                    ->dehydrated(true)
-                                    ->live(),
+                                // FileUpload::make('disbursal_pdf')
+                                //     ->label('Disbursal Documents')
+                                //     ->directory('disbursal-documents')
+                                //     ->disk('public')
+                                //     ->acceptedFileTypes(['application/pdf'])
+                                //     ->multiple()
+                                //     ->appendFiles()
+                                //     ->reorderable(false)
+                                //     ->downloadable()
+                                //     ->openable()
+                                //     ->dehydrated(true)
+                                //     ->live(),
 
-                                Placeholder::make('document_submit_action')
+                               FileUpload::make('disbursal_pdf')
+                                ->disk('public')
+                                ->directory('disbursal-documents')
+                                ->multiple()
+                                ->openable()
+                                 ->downloadable()
+                                ->appendFiles()
+                                ->rules([
+                                    function ($attribute, $value, $fail) {
+                                        if (is_array($value)) {
+                                            foreach ($value as $file) {
+                                                if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                                    if ($file->getMimeType() !== 'application/pdf') {
+                                                        $fail('Only PDF files are allowed.');
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                ]),
+                                    Placeholder::make('document_submit_action')
                                     ->key('document_submit_action')
                                     ->label('')
                                     ->content('')
@@ -932,11 +999,14 @@ class CustomerForm
                                             )
                                             ->requiresConfirmation()
                                             ->action(function (?\Illuminate\Database\Eloquent\Model $record, Set $set, Get $get) {
+
                                                 if (! $record) {
                                                     return;
                                                 }
 
-                                                
+                                                // dd($record);
+
+
 
                                                 $uploadedFiles = $get('disbursal_pdf');
                                                 // $uploadedFiles = data_get($this->data, 'disbursal_pdf');
@@ -951,7 +1021,7 @@ class CustomerForm
 
                                                 $filesArray = is_array($uploadedFiles) ? $uploadedFiles : [$uploadedFiles];
 
-                                            
+
 
                                                 $existingDocuments = CustomerDocument::where('customer_id', $record->id)
                                                     ->pluck('document_name')
@@ -987,7 +1057,7 @@ class CustomerForm
                                                 $set('documents_submitted', true);
                                                 $set('disbursal_pdf', $filesArray);
 
-                                                session()->put("customer_{$record->id}_docs_submitted", true);
+                                                // session()->put("customer_{$record->id}_docs_submitted", true);
 
                                                 Notification::make()
                                                     ->title($alreadySubmitted ? 'Documents updated successfully.' : 'Documents submitted successfully.')
@@ -1005,10 +1075,7 @@ class CustomerForm
                             ])
                             ->columns(1)
                             ->live()
-                            // ->visible(fn(Get $get) => (bool) $get('disbursal_finalized'))
-                            // ->visible(fn (Get $get) =>
-                            //         strtolower((string) $get('journey_status')) === 'disbursal_documents'
-                            //     )
+
                                 ->visible(fn (Get $get) =>
                                     in_array(
                                         strtolower((string) $get('journey_status')),
