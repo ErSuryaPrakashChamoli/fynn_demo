@@ -77,20 +77,20 @@ class CustomerForm
 
         asort($banks);
 
-$currencyField = fn (string $name, string $label) => TextInput::make($name)
-    ->label($label)
-    ->prefix('₹')
-    ->live()
-    ->formatStateUsing(fn ($state) => filled($state) ? indianCurrencyFormat($state) : null)
-    ->afterStateUpdated(function ($state, Set $set) use ($name) {
-        $value = preg_replace('/[^0-9]/', '', (string) $state);
+    $currencyField = fn (string $name, string $label) => TextInput::make($name)
+        ->label($label)
+        ->prefix('₹')
+        ->live()
+        ->formatStateUsing(fn ($state) => filled($state) ? indianCurrencyFormat($state) : null)
+        ->afterStateUpdated(function ($state, Set $set) use ($name) {
+            $value = preg_replace('/[^0-9]/', '', (string) $state);
 
-        if ($value !== '') {
-            $set($name, indianCurrencyFormat($value));
-        }
-    })
-    ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
-    ->visible(fn (Get $get) => $get('disbursal_status') === 'disbursed');
+            if ($value !== '') {
+                $set($name, indianCurrencyFormat($value));
+            }
+        })
+        ->dehydrateStateUsing(fn ($state) => preg_replace('/[^0-9]/', '', (string) $state))
+        ->visible(fn (Get $get) => $get('disbursal_status') === 'disbursed');
 
         return $schema
 
@@ -396,7 +396,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                 TextInput::make('application_no')
                                     ->label('Application No')
                                     ->maxLength(255)
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sfl', 'underwriting', 'approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sfl','underwriting', 'approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->dehydrated(),
 
                                 TextInput::make('lan_no')
@@ -405,7 +405,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     // ->required()
 
                                     // Fix: Agli stages me yeh field non-editable ho jaye par data visible rahe
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting','approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->dehydrated(),
 
                                 TextInput::make('eligible_loan_amount')
@@ -421,7 +421,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
                                     // Fix: Underwriting ya uske aage read-only ho jaye
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting', 'approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting','approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->dehydrated(),
 
                                 Select::make('documentation_status')
@@ -433,7 +433,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     ->live()
                                     ->required()
                                     // Fix: Underwriting ya uske aage selection freeze ho jaye
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting', 'approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'underwriting','approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->dehydrated(),
 
                                 CheckboxList::make('pending_document')
@@ -455,7 +455,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     ->visible(fn(Get $get): bool => strtolower((string) $get('documentation_status')) === 'pending')
                                     ->required(fn(Get $get): bool => strtolower((string) $get('documentation_status')) === 'pending')
                                     // Fix: Lock checkbox list when moved ahead
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting', 'approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'underwriting','approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->dehydrated(),
 
 
@@ -464,7 +464,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     ->rows(2)
                                     ->columnSpanFull()
                                     // Fix: Underwriting ya uske aage remarks non-editable ho jaye
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting', 'approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
+                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), [ 'underwriting','approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->dehydrated(),
 
                                     Hidden::make('underwriting_status')
@@ -490,8 +490,8 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                                     // Sirf UI state change karein agar data abhi pehli baar create ho raha hai
                                                     // $set('journey_status', 'underwriting');
 
-                                                    $set('documentation_status', 'complete');
-                                                    $set('journey_status', 'underwriting');
+                                                    // $set('documentation_status', 'complete');
+                                                    // $set('journey_status', 'underwriting');
                                                     // $set('underwriting_status', 'in_process');
 
                                                     return;
@@ -594,12 +594,12 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                             ->requiresConfirmation()
                                             // FIX 2: Added $set utility layer
                                             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
-                                                // if (! $record) {
-                                                //     // $set('journey_status', 'approved');
-                                                //     $set('underwriting_status', 'approved');
-                                                //     $set('journey_status', 'approved');
-                                                //     return;
-                                                // }
+                                                if (! $record) {
+                                                    // $set('journey_status', 'approved');
+                                                    $set('underwriting_status', 'approved');
+                                                    $set('journey_status', 'approved');
+                                                    return;
+                                                }
 
                                                 // // Database Update
                                                 // $record->update([
@@ -641,6 +641,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     ->prefix('₹')
                                     ->live()
                                     ->formatStateUsing(fn($state) => filled($state) ? indianCurrencyFormat($state) : null)
+                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $value = preg_replace('/[^0-9]/', '', (string) $state);
                                         if ($value !== '') {
@@ -661,6 +662,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                         'other' => 'Other',
                                     ]))
                                     ->searchable()
+                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->live(),
 
                                 Hidden::make('credit_approval_completed')
@@ -671,6 +673,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     ->visible(fn($get) => $get('sanctioned_bank') === 'other')
                                     ->required(fn($get) => $get('sanctioned_bank') === 'other')
                                     ->live()
+                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->afterStateUpdated(fn($state, callable $set) => $set('other_sanctioned_bank', Str::title($state)))
                                     ->maxLength(255),
 
@@ -679,6 +682,7 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                 Textarea::make('approved_remarks')
                                     ->label('Approved Credit Remarks')
                                     ->rows(2)
+                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
                                     ->columnSpanFull(),
 
                                 Placeholder::make('approval_actions')
@@ -707,11 +711,18 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
                                     ),
                             ])
                             ->columns(2)
-                            ->visible(function (Get $get): bool {
+                          ->visible(function (Get $get): bool {
+
                                 return auth()->user()->hasAnyRole(['Admin', 'Manager'])
-                                    && in_array(
-                                        strtolower((string) $get('journey_status')),
-                                        ['approved', 'sanctioned','dropped','carry_forward']
+                                    && (
+                                        in_array(
+                                            strtolower((string) $get('journey_status')),
+                                            ['approved', 'sanctioned', 'dropped', 'carry_forward']
+                                        )
+                                        || (
+                                            strtolower((string) $get('journey_status')) === 'underwriting'
+                                            && strtolower((string) $get('underwriting_status')) === 'approved'
+                                        )
                                     );
                             })
                             ->disabled(fn(Get $get): bool =>
@@ -870,6 +881,9 @@ $currencyField = fn (string $name, string $label) => TextInput::make($name)
 
                                             // dd($record);
                                                 if (! $record) {
+                                                     $set('journey_status', 'sanctioned');
+                                                     $set('disbursal_finalized', true);
+                                                    $set('disbursal_status', 'disbursed');
                                                     return;
                                                 }
 
