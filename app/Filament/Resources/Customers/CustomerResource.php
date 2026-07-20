@@ -144,7 +144,7 @@ class CustomerResource extends Resource
                 EditAction::make()
                     ->visible(
                         fn($record) =>
-                        ! $record->documents_submitted &&
+                        // ! $record->documents_submitted &&
                             auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER
                     ),
                 // DeleteAction::make()
@@ -240,8 +240,10 @@ class CustomerResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER
-            && ! $record->documents_submitted;
+        // return auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER
+        //     && ! $record->documents_submitted;
+
+        return auth()->user()->employee?->designation !== Employee::DESIGNATION_CALLER;
     }
 
     public static function canDelete(Model $record): bool

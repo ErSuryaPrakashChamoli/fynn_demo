@@ -30,13 +30,21 @@ class EditCustomer extends EditRecord
         $employee = auth()->user()->employee;
 
         if (
-            $employee?->designation === Employee::DESIGNATION_CALLER ||
-            $this->record->documents_submitted
-        ) {
-            $this->redirect(CustomerResource::getUrl('view', [
-                'record' => $this->record,
-            ]));
-        }
+                $employee?->designation === Employee::DESIGNATION_CALLER
+            ) {
+                $this->redirect(CustomerResource::getUrl('view', [
+                    'record' => $this->record,
+                ]));
+            }
+
+        // if (
+        //     $employee?->designation === Employee::DESIGNATION_CALLER ||
+        //     $this->record->documents_submitted
+        // ) {
+        //     $this->redirect(CustomerResource::getUrl('view', [
+        //         'record' => $this->record,
+        //     ]));
+        // }
     }
 
     protected function getRedirectUrl(): string
