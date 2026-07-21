@@ -260,37 +260,6 @@ class CustomerForm
                                     );
                             }),
 
-                        // Select::make('eligibility_status')
-                        //     ->label('Eligibility')
-                        //     ->required()
-                        //     ->options(['eligible' => 'Eligible', 'not_eligible' => 'Not Eligible', 'consent_pending' => 'Consent Pending'])
-                        //     ->live()
-                        //     ->disabled(function (?Customer $record, string $operation): bool {
-
-
-                        //         if (
-                        //             $operation === 'edit'
-                        //             && in_array($record?->eligibility_status, [
-                        //                 'not_eligible',
-                        //                 'consent_pending',
-                        //             ])
-                        //         ) {
-                        //             return false;
-                        //         }
-
-                        //         return self::lockCallerFields($record)
-                        //             || (
-                        //                 $operation === 'edit'
-                        //                 && ! auth()->user()->hasAnyRole(['Admin', 'Manager'])
-                        //             );
-                        //     }),
-                        // ->disabled(function (?Customer $record, string $operation): bool {
-                        //     return self::lockCallerFields($record)
-                        //         || ($operation === 'edit'
-                        //             && ! auth()->user()->hasAnyRole(['Admin', 'Manager']));
-                        // }),
-                        // ->disabled(fn (?Customer $record) => self::lockCallerFields($record))
-                        // ->disabled(fn(string $operation): bool => $operation === 'edit' && (!auth()->check() || !auth()->user()->hasAnyRole(['Admin', 'Manager']))),
 
                         Select::make('assign_to')
                             ->label('Assign To')
@@ -487,6 +456,7 @@ class CustomerForm
                                     ->dehydrated(),
 
 
+
                                 TextInput::make('eligible_loan_amount')
                                     ->label('Eligible Loan Amount')
                                     ->prefix('₹')
@@ -573,9 +543,15 @@ class CustomerForm
 
                                 Placeholder::make('sfl_promotion_trigger')
                                     ->label('')
-                                    ->visible(fn(Get $get): bool =>
-                                    strtolower((string) $get('journey_status')) === 'sfl' &&
-                                        strtolower((string) $get('documentation_status')) === 'complete')
+                                    // ->visible(fn(Get $get): bool =>
+                                    // strtolower((string) $get('journey_status')) === 'sfl' &&
+                                    //     strtolower((string) $get('documentation_status')) === 'complete')
+
+                                    ->visible(fn (Get $get): bool =>
+                                        strtolower((string) $get('journey_status')) === 'sfl'
+                                        && strtolower((string) $get('documentation_status')) === 'complete'
+                                        // && blank($get('underwriting_status'))
+                                    )
                                     ->hintAction(
                                         FormAction::make('promote_to_underwriting')
                                             ->label('Verify & Move to Underwriting')
@@ -591,7 +567,7 @@ class CustomerForm
                                                     // $set('journey_status', 'underwriting');
 
                                                     // $set('documentation_status', 'complete');
-                                                    // $set('journey_status', 'underwriting');
+                                                    $set('journey_status', 'underwriting');
                                                     // $set('underwriting_status', 'in_process');
 
                                                     return;
@@ -602,10 +578,10 @@ class CustomerForm
 
 
                                                 // $set('documentation_status', 'complete');
-                                                // $set('journey_status', 'underwriting');
-
-                                                $set('documentation_status', 'complete');
                                                 $set('journey_status', 'underwriting');
+
+                                                // // $set('documentation_status', 'complete');
+                                                // $set('journey_status', 'underwriting');
                                                 // $set('underwriting_status', 'in_process');
 
 
@@ -671,55 +647,55 @@ class CustomerForm
                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']))
                                     ->dehydrated(),
 
-                                Placeholder::make('underwriting_actions')
-                                    ->label('')
-                                    // ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting')
-                                    ->visible(
-                                        fn(Get $get): bool =>
-                                        strtolower((string) $get('journey_status')) === 'underwriting'
-                                            && ! in_array(
-                                                strtolower((string) $get('underwriting_status')),
-                                                ['in_process', 'rejected']
-                                            )
-                                    )
-                                    ->hintActions([
-                                        FormAction::make('promote_to_approval')
-                                            ->label('Approve & Move to Credit Approval')
-                                            ->visible(
-                                                fn(Get $get) =>
-                                                $get('underwriting_status') === 'approved'
-                                            )
-                                            ->icon('heroicon-m-check-badge')
-                                            ->color('success')
-                                            ->requiresConfirmation()
-                                            // FIX 2: Added $set utility layer
-                                            ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
-                                                if (! $record) {
-                                                    // $set('journey_status', 'approved');
-                                                    $set('underwriting_status', 'approved');
-                                                    $set('journey_status', 'approved');
-                                                    return;
-                                                }
+                                // Placeholder::make('underwriting_actions')
+                                //     ->label('')
+                                //     // ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting')
+                                //     ->visible(
+                                //         fn(Get $get): bool =>
+                                //         strtolower((string) $get('journey_status')) === 'underwriting'
+                                //             && ! in_array(
+                                //                 strtolower((string) $get('underwriting_status')),
+                                //                 ['in_process', 'rejected']
+                                //             )
+                                //     )
+                                //     ->hintActions([
+                                //         FormAction::make('promote_to_approval')
+                                //             ->label('Approve & Move to Credit Approval')
+                                //             ->visible(
+                                //                 fn(Get $get) =>
+                                //                 $get('underwriting_status') === 'approved'
+                                //             )
+                                //             ->icon('heroicon-m-check-badge')
+                                //             ->color('success')
+                                //             ->requiresConfirmation()
+                                //             // FIX 2: Added $set utility layer
+                                //             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
+                                //                 if (! $record) {
+                                //                     // $set('journey_status', 'approved');
+                                //                     $set('underwriting_status', 'approved');
+                                //                     $set('journey_status', 'approved');
+                                //                     return;
+                                //                 }
 
-                                                // // Database Update
-                                                // $record->update([
-                                                //     'underwriting_status' => 'approved',
-                                                //     'journey_status' => 'approved'
-                                                // ]);
+                                //                 // // Database Update
+                                //                 // $record->update([
+                                //                 //     'underwriting_status' => 'approved',
+                                //                 //     'journey_status' => 'approved'
+                                //                 // ]);
 
-                                                // Real-time UI Sync/Refresh
-                                                $set('journey_status', 'approved');
-                                                $set('underwriting_status', 'approved');
+                                //                 // Real-time UI Sync/Refresh
+                                //                 $set('journey_status', 'approved');
+                                //                 $set('underwriting_status', 'approved');
 
 
-                                                CustomerStageHistory::create([
-                                                    'customer_id' => $record->id,
-                                                    'stage_name' => 'Underwriting Stage Analysis',
-                                                    'status_value' => 'Underwriting Approved (Sent to Stage 3)',
-                                                    'user_id' => auth()->id()
-                                                ]);
-                                            }),
-                                    ]),
+                                //                 CustomerStageHistory::create([
+                                //                     'customer_id' => $record->id,
+                                //                     'stage_name' => 'Underwriting Stage Analysis',
+                                //                     'status_value' => 'Underwriting Approved (Sent to Stage 3)',
+                                //                     'user_id' => auth()->id()
+                                //                 ]);
+                                //             }),
+                                //     ]),
                             ])
                             ->columns(2)
                             // ->visible(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting', 'approved', 'sanctioned', 'not_approved']))
@@ -785,30 +761,109 @@ class CustomerForm
                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']))
                                     ->columnSpanFull(),
 
-                                Placeholder::make('approval_actions')
+                                // Placeholder::make('approval_actions')
+                                //     ->label('')
+                                //     ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved')
+                                //     ->hintAction(
+                                //         FormAction::make('promote_to_sanctioned')
+                                //             ->label('Approve & Move to Disbursal')
+                                //             ->icon('heroicon-m-banknotes')
+                                //             ->color('success')
+                                //             ->requiresConfirmation() // Confirmation popup trigger
+                                //             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
+
+
+                                //                 $set('credit_approval_completed', true);
+                                //                 //  $set('journey_status', 'approved');
+
+                                //                 // 3. Central Audit Trail Registry Logging
+                                //                 CustomerStageHistory::create([
+                                //                     'customer_id'  => $record->id,
+                                //                     'stage_name'   => 'Step 3: Credit Approval Closed',
+                                //                     'status_value' => 'Promoted to Disbursed (Stage 4)',
+                                //                     'user_id'      => auth()->id()
+                                //                 ]);
+                                //             })
+                                //     ),
+
+                                  Placeholder::make('underwriting_actions')
                                     ->label('')
-                                    ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved')
-                                    ->hintAction(
-                                        FormAction::make('promote_to_sanctioned')
-                                            ->label('Approve & Move to Disbursal')
-                                            ->icon('heroicon-m-banknotes')
+                                    ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting')
+                                    // ->visible(
+                                    //     fn(Get $get): bool =>
+                                    //     strtolower((string) $get('journey_status')) === 'underwriting'
+                                    //         && ! in_array(
+                                    //             strtolower((string) $get('underwriting_status')),
+                                    //             ['in_process', 'rejected']
+                                    //         )
+                                    // )
+                                    ->hintActions([
+                                        FormAction::make('promote_to_approval')
+                                            ->label('Approve & Move to Credit Approval')
+                                            // ->disabled(function (Get $get) {
+
+                                            //         if (blank($get('approved_loan_amount'))) {
+                                            //             return true;
+                                            //         }
+
+                                            //         if (blank($get('sanctioned_bank'))) {
+                                            //             return true;
+                                            //         }
+
+                                            //         if (
+                                            //             $get('sanctioned_bank') === 'other' &&
+                                            //             blank($get('other_sanctioned_bank'))
+                                            //         ) {
+                                            //             return true;
+                                            //         }
+
+                                            //         if (blank($get('approved_remarks'))) {
+                                            //             return true;
+                                            //         }
+
+                                            //         return false;
+                                            //     })
+                                            ->visible(
+                                                fn(Get $get) =>
+                                                $get('underwriting_status') === 'approved'
+                                            )
+                                            ->icon('heroicon-m-check-badge')
                                             ->color('success')
-                                            ->requiresConfirmation() // Confirmation popup trigger
+                                            ->requiresConfirmation()
+                                            // FIX 2: Added $set utility layer
                                             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
+                                                // dd($record);
+                                                if (! $record) {
+                                                    $set('journey_status', 'approved');
+                                                    $set('underwriting_status', 'approved');
+                                                    $set('journey_status', 'approved');
+                                                    return;
+                                                }
 
 
-                                                $set('credit_approval_completed', true);
-                                                //  $set('journey_status', 'approved');
+                                                // // Database Update
+                                                // $record->update([
+                                                //     'underwriting_status' => 'approved',
+                                                //     'journey_status' => 'approved'
+                                                // ]);
 
-                                                // 3. Central Audit Trail Registry Logging
+                                                // Real-time UI Sync/Refresh
+                                                // $set('journey_status', 'approved');
+                                                // // $set('underwriting_status', 'approved');
+
+                                                $set('journey_status', 'approved');
+                                                $set('underwriting_status', 'approved');
+                                                $set('journey_status', 'approved');
+
+
                                                 CustomerStageHistory::create([
-                                                    'customer_id'  => $record->id,
-                                                    'stage_name'   => 'Step 3: Credit Approval Closed',
-                                                    'status_value' => 'Promoted to Disbursed (Stage 4)',
-                                                    'user_id'      => auth()->id()
+                                                    'customer_id' => $record->id,
+                                                    'stage_name' => 'Underwriting Stage Analysis',
+                                                    'status_value' => 'Underwriting Approved (Sent to Stage 3)',
+                                                    'user_id' => auth()->id()
                                                 ]);
-                                            })
-                                    ),
+                                            }),
+                                    ]),
                             ])
                             ->columns(2)
                             ->visible(function (Get $get): bool {
@@ -966,11 +1021,11 @@ class CustomerForm
 
                                 Placeholder::make('disbursal_actions')
                                     ->label('')
-                                    // ->visible(
-                                    //     fn(Get $get): bool =>
-                                    //     ! $get('disbursal_finalized')
-                                    //         && $get('disbursal_status') === 'disbursed'
-                                    // )
+                                    ->visible(
+                                        fn(Get $get): bool =>
+                                        ! $get('disbursal_finalized')
+                                            && $get('disbursal_status') === 'disbursed'
+                                    )
                                     ->hintAction(
                                         FormAction::make('finalize_disbursal')
                                             ->label('Finalize Disbursal')
@@ -992,9 +1047,13 @@ class CustomerForm
                                                 //     'disbursal_finalized' => true,
                                                 // ]);
 
-                                                $status = $get('disbursal_status');
+                                                // $status = $get('disbursal_status');
 
                                                 // dd($status);
+
+                                                $set('journey_status', 'sanctioned');
+                                                $set('disbursal_finalized', true);
+                                                $set('disbursal_status', 'disbursed');
 
 
 
@@ -1042,6 +1101,7 @@ class CustomerForm
                                         'disbursal_documents',
                                         'carry_forward',
                                         'dropped',
+                                        'approved',
                                         'disbursed'
                                     ])
                             ),
