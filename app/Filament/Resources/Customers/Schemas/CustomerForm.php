@@ -604,7 +604,7 @@ class CustomerForm
                                 fn(Get $get): bool =>
                                 in_array(
                                     strtolower((string) $get('journey_status')),
-                                    ['approved', 'sanctioned', 'not_approved','dropped', 'carry_forward']
+                                    ['approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']
                                 )
                             )
                             ->schema([
