@@ -486,22 +486,6 @@ class CustomerForm
                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting', 'approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']))
                                     ->dehydrated(),
 
-                                // TextInput::make('eligible_loan_amount')
-                                //     ->label('Eligible Loan Amount')
-                                //     ->prefix('₹')
-                                //     ->live()
-                                //     ->formatStateUsing(fn($state) => filled($state) ? indianCurrencyFormat($state) : null)
-                                //     ->afterStateUpdated(function ($state, callable $set) {
-                                //         $value = preg_replace('/[^0-9]/', '', (string) $state);
-                                //         if ($value !== '') {
-                                //             $set('eligible_loan_amount', indianCurrencyFormat($value));
-                                //         }
-                                //     })
-                                //     ->required(fn (Get $get) => $get('eligibility_status') === 'eligible')
-                                //     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
-                                //     // Fix: Underwriting ya uske aage read-only ho jaye
-                                //     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting','approved', 'sanctioned', 'not_approved','dropped','carry_forward']))
-                                //     ->dehydrated(),
 
                                 TextInput::make('eligible_loan_amount')
                                     ->label('Eligible Loan Amount')
