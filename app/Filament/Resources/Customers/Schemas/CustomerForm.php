@@ -320,13 +320,6 @@ class CustomerForm
                             ])
                             ->searchable()
                             ->preload()
-                            // ->required(fn() => auth()->user()->hasAnyRole([
-                            //     'Admin',
-                            //     'Manager',
-                            //     'Team Leader',
-                            //     'Cluster Manager'
-                            // ]))
-
                             ->required(
                                 fn(Get $get) =>
                                 auth()->user()->hasAnyRole([
@@ -547,9 +540,10 @@ class CustomerForm
                                     // strtolower((string) $get('journey_status')) === 'sfl' &&
                                     //     strtolower((string) $get('documentation_status')) === 'complete')
 
-                                    ->visible(fn (Get $get): bool =>
+                                    ->visible(
+                                        fn(Get $get): bool =>
                                         strtolower((string) $get('journey_status')) === 'sfl'
-                                        && strtolower((string) $get('documentation_status')) === 'complete'
+                                            && strtolower((string) $get('documentation_status')) === 'complete'
                                         // && blank($get('underwriting_status'))
                                     )
                                     ->hintAction(
@@ -610,7 +604,7 @@ class CustomerForm
                                 fn(Get $get): bool =>
                                 in_array(
                                     strtolower((string) $get('journey_status')),
-                                    ['approved', 'sanctioned', 'not_approved']
+                                    ['approved', 'sanctioned', 'not_approved','dropped', 'carry_forward']
                                 )
                             )
                             ->schema([
@@ -636,74 +630,47 @@ class CustomerForm
                                     ->suffixIcon('heroicon-m-calendar')
                                     ->visible(fn(Get $get) => $get('underwriting_status') === 'approved')
                                     ->required(fn(Get $get) => $get('underwriting_status') === 'approved')
+                                    ->dehydrated(true)
                                     ->label('Approval Date'),
 
 
                                 Textarea::make('underwriting_remarks')
                                     ->label('Underwriting Remarks')
-
                                     ->rows(2)
                                     ->columnSpanFull()
                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']))
                                     ->dehydrated(),
 
-                                // Placeholder::make('underwriting_actions')
-                                //     ->label('')
-                                //     // ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting')
-                                //     ->visible(
-                                //         fn(Get $get): bool =>
-                                //         strtolower((string) $get('journey_status')) === 'underwriting'
-                                //             && ! in_array(
-                                //                 strtolower((string) $get('underwriting_status')),
-                                //                 ['in_process', 'rejected']
-                                //             )
-                                //     )
-                                //     ->hintActions([
-                                //         FormAction::make('promote_to_approval')
-                                //             ->label('Approve & Move to Credit Approval')
-                                //             ->visible(
-                                //                 fn(Get $get) =>
-                                //                 $get('underwriting_status') === 'approved'
-                                //             )
-                                //             ->icon('heroicon-m-check-badge')
-                                //             ->color('success')
-                                //             ->requiresConfirmation()
-                                //             // FIX 2: Added $set utility layer
-                                //             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
-                                //                 if (! $record) {
-                                //                     // $set('journey_status', 'approved');
-                                //                     $set('underwriting_status', 'approved');
-                                //                     $set('journey_status', 'approved');
-                                //                     return;
-                                //                 }
 
-                                //                 // // Database Update
-                                //                 // $record->update([
-                                //                 //     'underwriting_status' => 'approved',
-                                //                 //     'journey_status' => 'approved'
-                                //                 // ]);
-
-                                //                 // Real-time UI Sync/Refresh
-                                //                 $set('journey_status', 'approved');
-                                //                 $set('underwriting_status', 'approved');
-
-
-                                //                 CustomerStageHistory::create([
-                                //                     'customer_id' => $record->id,
-                                //                     'stage_name' => 'Underwriting Stage Analysis',
-                                //                     'status_value' => 'Underwriting Approved (Sent to Stage 3)',
-                                //                     'user_id' => auth()->id()
-                                //                 ]);
-                                //             }),
-                                //     ]),
                             ])
                             ->columns(2)
                             // ->visible(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['underwriting', 'approved', 'sanctioned', 'not_approved']))
+                            // ->visible(function (Get $get): bool {
+                            //     return ! auth()->user()->hasRole('Caller')
+                            //         && in_array(
+                            //             strtolower((string) $get('journey_status')),
+                            //             ['underwriting', 'approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']
+                            //         );
+                            // })
+
+
                             ->visible(function (Get $get): bool {
+                                $journeyStatus = strtolower((string) $get('journey_status'));
+
                                 return ! auth()->user()->hasRole('Caller')
-                                    && in_array(
-                                        strtolower((string) $get('journey_status')),
-                                        ['underwriting', 'approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']
+                                    && (
+                                        in_array($journeyStatus, [
+                                            'underwriting',
+                                            'approved',
+                                            'sanctioned',
+                                            'not_approved',
+                                            'dropped',
+                                            'carry_forward',
+                                        ])
+                                        || (
+                                            $journeyStatus === 'sfl'
+                                            && filled($get('underwriting_status'))
+                                        )
                                     );
                             }),
 
@@ -725,6 +692,7 @@ class CustomerForm
                                         }
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
+                                    ->dehydrated(true)
                                     ->required(),
 
                                 // Select::make('sanctioned_bank')
@@ -739,6 +707,7 @@ class CustomerForm
                                     ]))
                                     ->searchable()
                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->dehydrated(true)
                                     ->live(),
 
                                 Hidden::make('credit_approval_completed')
@@ -749,6 +718,7 @@ class CustomerForm
                                     ->visible(fn($get) => $get('sanctioned_bank') === 'other')
                                     ->required(fn($get) => $get('sanctioned_bank') === 'other')
                                     ->live()
+                                    ->dehydrated(true)
                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']))
                                     ->afterStateUpdated(fn($state, callable $set) => $set('other_sanctioned_bank', Str::title($state)))
                                     ->maxLength(255),
@@ -759,70 +729,15 @@ class CustomerForm
                                     ->label('Approved Credit Remarks')
                                     ->rows(2)
                                     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['approved', 'sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->dehydrated(true)
                                     ->columnSpanFull(),
 
-                                // Placeholder::make('approval_actions')
-                                //     ->label('')
-                                //     ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'approved')
-                                //     ->hintAction(
-                                //         FormAction::make('promote_to_sanctioned')
-                                //             ->label('Approve & Move to Disbursal')
-                                //             ->icon('heroicon-m-banknotes')
-                                //             ->color('success')
-                                //             ->requiresConfirmation() // Confirmation popup trigger
-                                //             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
-
-
-                                //                 $set('credit_approval_completed', true);
-                                //                 //  $set('journey_status', 'approved');
-
-                                //                 // 3. Central Audit Trail Registry Logging
-                                //                 CustomerStageHistory::create([
-                                //                     'customer_id'  => $record->id,
-                                //                     'stage_name'   => 'Step 3: Credit Approval Closed',
-                                //                     'status_value' => 'Promoted to Disbursed (Stage 4)',
-                                //                     'user_id'      => auth()->id()
-                                //                 ]);
-                                //             })
-                                //     ),
-
-                                  Placeholder::make('underwriting_actions')
+                                Placeholder::make('underwriting_actions')
                                     ->label('')
-                                    ->visible(fn (Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting')
-                                    // ->visible(
-                                    //     fn(Get $get): bool =>
-                                    //     strtolower((string) $get('journey_status')) === 'underwriting'
-                                    //         && ! in_array(
-                                    //             strtolower((string) $get('underwriting_status')),
-                                    //             ['in_process', 'rejected']
-                                    //         )
-                                    // )
+                                    ->visible(fn(Get $get): bool => strtolower((string) $get('journey_status')) === 'underwriting')
                                     ->hintActions([
                                         FormAction::make('promote_to_approval')
                                             ->label('Approve & Move to Credit Approval')
-                                            // ->disabled(function (Get $get) {
-
-                                            //         if (blank($get('approved_loan_amount'))) {
-                                            //             return true;
-                                            //         }
-
-                                            //         if (blank($get('sanctioned_bank'))) {
-                                            //             return true;
-                                            //         }
-
-                                            //         if (
-                                            //             $get('sanctioned_bank') === 'other' &&
-                                            //             blank($get('other_sanctioned_bank'))
-                                            //         ) {
-                                            //             return true;
-                                            //         }
-
-                                            //         if (blank($get('approved_remarks'))) {
-                                            //             return true;
-                                            //         }
-
-                                            //         return false;
-                                            //     })
                                             ->visible(
                                                 fn(Get $get) =>
                                                 $get('underwriting_status') === 'approved'
@@ -833,29 +748,21 @@ class CustomerForm
                                             // FIX 2: Added $set utility layer
                                             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set) {
                                                 // dd($record);
+
+                                                $record->update([
+                                                    'journey_status' => 'approved',
+                                                ]);
+
+                                                $set('journey_status', 'approved');
+
                                                 if (! $record) {
                                                     $set('journey_status', 'approved');
-                                                    $set('underwriting_status', 'approved');
-                                                    $set('journey_status', 'approved');
+                                                    // $set('underwriting_status', 'approved');
+                                                    // $set('journey_status', 'approved');
                                                     return;
                                                 }
 
-
-                                                // // Database Update
-                                                // $record->update([
-                                                //     'underwriting_status' => 'approved',
-                                                //     'journey_status' => 'approved'
-                                                // ]);
-
-                                                // Real-time UI Sync/Refresh
                                                 // $set('journey_status', 'approved');
-                                                // // $set('underwriting_status', 'approved');
-
-                                                $set('journey_status', 'approved');
-                                                $set('underwriting_status', 'approved');
-                                                $set('journey_status', 'approved');
-
-
                                                 CustomerStageHistory::create([
                                                     'customer_id' => $record->id,
                                                     'stage_name' => 'Underwriting Stage Analysis',
@@ -907,7 +814,8 @@ class CustomerForm
                                         'dropped' => 'Dropped',
                                     ])
                                     ->live()
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->dehydrated(true)
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped']))
                                     ->required(),
 
                                 Select::make('channel')
@@ -920,7 +828,8 @@ class CustomerForm
                                         'fast_credit' => 'Fast Credit',
                                         'kms_finbud' => 'KMS Finbud',
                                     ])
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped']))
+                                    ->dehydrated(true)
                                     ->visible(
                                         fn(Get $get) =>
                                         in_array($get('disbursal_status'), [
@@ -935,6 +844,7 @@ class CustomerForm
                                     ->label('Final Net Disbursed Loan Amount')
                                     ->prefix('₹')
                                     ->live()
+                                    ->dehydrated(true)
                                     ->formatStateUsing(fn($state) => filled($state) ? indianCurrencyFormat($state) : null)
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $value = preg_replace('/[^0-9]/', '', (string) $state);
@@ -945,7 +855,7 @@ class CustomerForm
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'disbursed')
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped']))
                                     ->required(fn(Get $get) => $get('disbursal_status') === 'disbursed'),
 
                                 TextInput::make('cashback')
@@ -961,7 +871,7 @@ class CustomerForm
                                         }
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped']))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'disbursed'),
 
                                 TextInput::make('subvention')
@@ -977,7 +887,7 @@ class CustomerForm
                                         }
                                     })
                                     ->dehydrateStateUsing(fn($state) => preg_replace('/[^0-9]/', '', (string) $state))
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped']))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'disbursed'),
 
                                 TextInput::make('docking')
@@ -985,7 +895,7 @@ class CustomerForm
                                     ->prefix('₹')
                                     ->live()
                                     ->formatStateUsing(fn($state) => filled($state) ? indianCurrencyFormat($state) : null)
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped']))
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         $value = preg_replace('/[^0-9]/', '', (string) $state);
 
@@ -1000,19 +910,34 @@ class CustomerForm
                                             && auth()->user()?->hasRole('Admin')
                                     ),
 
+                                // DatePicker::make('carry_forward_date')
+                                //     ->label('Carry Forward Date')
+                                //     ->displayFormat('d F Y')
+                                //     ->native(false)
+                                //     ->dehydrated(true)
+                                //     ->suffixIcon('heroicon-m-calendar')
+                                //     ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                //     ->visible(fn(Get $get) => $get('disbursal_status') === 'carry_forward')
+                                //     ->required(fn(Get $get) => $get('disbursal_status') === 'carry_forward'),
+
                                 DatePicker::make('carry_forward_date')
                                     ->label('Carry Forward Date')
                                     ->displayFormat('d F Y')
                                     ->native(false)
+                                    ->dehydrated(true)
                                     ->suffixIcon('heroicon-m-calendar')
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->minDate(today()) // Today and future dates only
+                                    ->disabled(fn(Get $get): bool => in_array(
+                                        strtolower((string) $get('journey_status')),
+                                        ['sanctioned', 'not_approved', 'dropped', 'carry_forward']
+                                    ))
                                     ->visible(fn(Get $get) => $get('disbursal_status') === 'carry_forward')
                                     ->required(fn(Get $get) => $get('disbursal_status') === 'carry_forward'),
 
                                 Textarea::make('sanctioned_remarks')
                                     ->label('Final Disbursal Remarks')
                                     ->rows(2)
-                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped', 'carry_forward']))
+                                    ->disabled(fn(Get $get): bool => in_array(strtolower((string) $get('journey_status')), ['sanctioned', 'not_approved', 'dropped']))
                                     ->columnSpanFull()
                                     ->required(),
 
@@ -1034,54 +959,21 @@ class CustomerForm
                                             ->requiresConfirmation()
                                             ->action(function (?\Illuminate\Database\Eloquent\Model $record, callable $set,  Get $get) {
                                                 // ->action(function (array $data, callable $set ,  Get $get) {
+                                                // $record->update([
+                                                //     'journey_status' => 'sanctioned',
+                                                // ]);
+
+                                                $set('journey_status', 'sanctioned');
 
                                                 // dd($record);
                                                 if (! $record) {
                                                     $set('journey_status', 'sanctioned');
-                                                    $set('disbursal_finalized', true);
-                                                    $set('disbursal_status', 'disbursed');
+                                                    // $set('disbursal_finalized', true);
+                                                    // $set('disbursal_status', 'disbursed');
                                                     return;
                                                 }
 
-                                                // $record->update([
-                                                //     'disbursal_finalized' => true,
-                                                // ]);
 
-                                                // $status = $get('disbursal_status');
-
-                                                // dd($status);
-
-                                                $set('journey_status', 'sanctioned');
-                                                $set('disbursal_finalized', true);
-                                                $set('disbursal_status', 'disbursed');
-
-
-
-                                                // switch ($status) {
-
-                                                // case 'disbursed':
-
-                                                //     $set('journey_status', 'sanctioned');
-                                                //     $set('disbursal_finalized', true);
-                                                //     $set('disbursal_status', 'disbursed');
-                                                //     break;
-
-                                                // case 'carry_forward':
-                                                //     $set('journey_status', 'carry_forward');
-                                                //     $set('disbursal_status', 'carry_forward');
-                                                //     break;
-
-                                                // case 'dropped':
-                                                //     $set('journey_status', 'dropped');
-                                                //     $set('disbursal_finalized', true);
-                                                //     $set('disbursal_status', 'dropped');
-                                                //     break;
-                                                // }
-
-
-                                                // $set('journey_status', 'sanctioned');
-                                                // $set('disbursal_finalized', true);
-                                                //  $set('disbursal_status', 'dropped');
 
                                                 CustomerStageHistory::create([
                                                     'customer_id'  => $record->id,
@@ -1257,8 +1149,8 @@ class CustomerForm
                                     strtolower((string) $get('journey_status')),
                                     [
                                         'sanctioned',
-                                        'carry_forward',
-                                        'dropped',
+                                        // 'carry_forward',
+                                        // 'dropped',
                                     ]
                                 )
                             ),

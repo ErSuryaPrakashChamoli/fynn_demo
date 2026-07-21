@@ -60,9 +60,12 @@ class EditCustomer extends EditRecord
         // $oldStatus = strtolower($this->getRecord()->journey_status ?? 'sfl');
         // $currentStatus = $oldStatus;
 
-        $oldStatus = strtolower(
-            $data['journey_status'] ?? $this->getRecord()->journey_status ?? 'sfl'
-        );
+        // $oldStatus = strtolower(
+        //     $data['journey_status'] ?? $this->getRecord()->journey_status ?? 'sfl'
+        // );
+        // $currentStatus = $oldStatus;
+
+        $oldStatus = strtolower($this->getRecord()->journey_status ?? 'sfl');
         $currentStatus = $oldStatus;
 
         /**
@@ -113,22 +116,6 @@ class EditCustomer extends EditRecord
             }
         }
 
-        /**
-         * ==========================================
-         * STAGE 3 : CREDIT APPROVAL
-         * ==========================================
-         */
-
-        if ($currentStatus === 'approved') {
-            $data['journey_status'] = 'approved';
-        }
-
-        /**
-         * ==========================================
-         * STAGE 4 : DISBURSAL
-         * ==========================================
-         */
-
 
 
         if (! empty($data['disbursal_status'] )) {
@@ -138,16 +125,20 @@ class EditCustomer extends EditRecord
                 case 'disbursed':
                     $data['journey_status'] = 'sanctioned';
                     $data['disbursal_finalized'] = true;
+                    $data['disbursal_status'] = 'disbursed';
+
                     break;
 
                 case 'carry_forward':
                     $data['journey_status'] = 'carry_forward';
                     $data['disbursal_finalized'] = false;
+                    $data['disbursal_status'] = 'carry_forward';
                     break;
 
                 case 'dropped':
                     $data['journey_status'] = 'dropped';
                     $data['disbursal_finalized'] = true;
+                    $data['disbursal_status'] = 'dropped';
                     break;
             }
         }
